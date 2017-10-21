@@ -54,25 +54,25 @@ loop
 	sta color
 	lbsr gfxclear
 
-	jsr [$a000]
+	lbsr keywait
 
 	lda #%01010101
 	sta color
 	lbsr gfxclear
 
-	jsr [$a000]
+	lbsr keywait
 
 	lda #%10101010
 	sta color
 	lbsr gfxclear
 
-	jsr [$a000]
+	lbsr keywait
 
 	lda #%11111111
 	sta color
 	lbsr gfxclear
 
-	jsr [$a000]
+	lbsr keywait
 
 	jmp loop
 

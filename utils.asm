@@ -18,6 +18,12 @@ romsoff
  sta $FFDF
  rts
 
+* Wait for a key
+keywait
+ jsr [$a000]
+ beq keywait
+ rts
+
 * Wait forever
 halt bra halt
 
