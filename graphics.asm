@@ -29,8 +29,8 @@ gfxinit
 ; 0   Unused
 ; 11  LPF: 225
 ; 111 HRES: 160 bytes per row
-; 10  CRES: 16 colors, 2 pixels per byte
- ldb #$7E
+; 01  CRES: 4 colors, 4 pixels per byte
+ ldb #$7D
  stb $FF99
 
 ; VERTICAL OFFSET REGISTERS $FF9D - $FF9E
@@ -43,9 +43,9 @@ gfxinit
 
 ; COLOR PALETTE REGISTERS $FFB0 - $FFBF
  clra
- sta $ffb0
+ sta $ffb0 ; black
  lda #$ff
- sta $ffbf
+ sta $ffb1 ; white
 
  puls d,pc
 

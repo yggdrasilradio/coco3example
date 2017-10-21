@@ -29,7 +29,6 @@ color	rmb 1
 	org $3000 
 
 start
-
 	* disable interrupts
 	orcc #$50
 
@@ -47,225 +46,42 @@ start
 	lbsr fast
 
 	* init graphics
-	lda #$55
-	sta color
 	lbsr gfxinit
 
 	* clear screen
+loop
+	lda #%00000000
+	sta color
 	lbsr gfxclear
 
-	lda #$f
+	jsr [$a000]
+
+	lda #%01010101
 	sta color
+	lbsr gfxclear
 
-	ldd #160
-	std x1
-	ldd #112
-	std y1
+	jsr [$a000]
 
-	ldd #160
-	std x2
-	ldd #0
-	std y2
-
-	lbsr line ; 0
-
-	ldd #160
-	std x1
-	ldd #112
-	std y1
-
-	ldd #319
-	std x2
-	ldd #112
-	std y2
-
-	lbsr line ; 90
-
-	ldd #160
-	std x1
-	ldd #112
-	std y1
-
-	ldd #160
-	std x2
-	ldd #224
-	std y2
-
-	lbsr line ; 180
-
-	ldd #160
-	std x1
-	ldd #112
-	std y1
-
-	ldd #0
-	std x2
-	ldd #112
-	std y2
-
-	lbsr line ; 270
-
-	lda #$1
+	lda #%10101010
 	sta color
+	lbsr gfxclear
 
-* 45 degrees
+	jsr [$a000]
 
-	ldd #160
-	std x1
-	ldd #112
-	std y1
+	lda #%11111111
+	sta color
+	lbsr gfxclear
 
-	ldd #272
-	std x2
-	ldd #0
-	std y2
+	jsr [$a000]
 
-	lbsr line ; 45
+	jmp loop
 
-	ldd #160
-	std x1
-	ldd #112
-	std y1
-
-	ldd #272
-	std x2
-	ldd #224
-	std y2
-
-	lbsr line ; 135
-
-	ldd #160
-	std x1
-	ldd #112
-	std y1
-
-	ldd #48
-	std x2
-	ldd #224
-	std y2
-
-	lbsr line ; 225
-
-	ldd #160
-	std x1
-	ldd #112
-	std y1
-
-	ldd #48
-	std x2
-	ldd #0
-	std y2
-
-	lbsr line ; 320
-
-* 22.5
-
-	ldd #160
-	std x1
-	ldd #112
-	std y1
-
-	ldd #0
-	std x2
-	ldd #48
-	std y2
-
-	lbsr line ; SNW
-
-	ldd #160
-	std x1
-	ldd #112
-	std y1
-
-	ldd #319
-	std x2
-	ldd #48
-	std y2
-
-	lbsr line ; SNE
-
-	ldd #160
-	std x1
-	ldd #112
-	std y1
-
-	ldd #0
-	std x2
-	ldd #176
-	std y2
-
-	lbsr line ; NSW
-
-	ldd #160
-	std x1
-	ldd #112
-	std y1
-
-	ldd #319
-	std x2
-	ldd #176
-	std y2
-
-	lbsr line ; NSE
-
-	ldd #160
-	std x1
-	ldd #112
-	std y1
-
-	ldd #104
-	std x2
-	ldd #0
-	std y2
-
-	lbsr line ;
-
-	ldd #160
-	std x1
-	ldd #112
-	std y1
-
-	ldd #104
-	std x2
-	ldd #224
-	std y2
-
-	lbsr line ;
-
-	ldd #160
-	std x1
-	ldd #112
-	std y1
-
-	ldd #216
-	std x2
-	ldd #224
-	std y2
-
-	lbsr line
-
-	ldd #160
-	std x1
-	ldd #112
-	std y1
-
-	ldd #216
-	std x2
-	ldd #0
-	std y2
-
-	lbsr line
-
-	* wait forever
-	lbra halt
-
+	include	utils.asm
 	include graphics.asm
-	include utils.asm
 	include line.asm
 
 * Screen $7000
 
 SCREEN	equ $7000
 
-zprog
 	end start
