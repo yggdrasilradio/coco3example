@@ -46,6 +46,10 @@ gfxinit
  sta $ffb0 ; black
  lda #$ff
  sta $ffb1 ; white
+ lda #$44
+ sta $ffb2
+ lda #$55
+ sta $ffb3
 
  puls d,pc
 

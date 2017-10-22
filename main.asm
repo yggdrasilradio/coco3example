@@ -50,13 +50,13 @@ start
 
 	* clear screen
 loop
-	lda #%00000000
+	lda #%01010101
 	sta color
 	lbsr gfxclear
 
 	lbsr keywait
 
-	lda #%01010101
+	lda #%00000000
 	sta color
 	lbsr gfxclear
 
@@ -74,7 +74,7 @@ loop
 
 	lbsr keywait
 
-	jmp loop
+	bra loop
 
 	include	utils.asm
 	include graphics.asm

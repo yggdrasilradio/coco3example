@@ -19,10 +19,12 @@ romsoff
  rts
 
 * Wait for a key
+
 keywait
- jsr [$a000]
- beq keywait
- rts
+	jsr [$a000]
+	tsta
+	beq keywait
+	rts
 
 * Wait forever
 halt bra halt
