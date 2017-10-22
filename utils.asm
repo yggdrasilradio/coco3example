@@ -21,9 +21,11 @@ romsoff
 * Wait for a key
 
 keywait
+	lbsr romson
 	jsr [$a000]
 	tsta
 	beq keywait
+	lbsr romsoff
 	rts
 
 * Wait forever
