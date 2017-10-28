@@ -42,13 +42,13 @@ gfxinit
  clr $FF9F
 
 ; COLOR PALETTE REGISTERS $FFB0 - $FFBF
- clra
- sta $ffb0 ; black
- lda #$ff
- sta $ffb1 ; white
- lda #$44
+ lda #0	 ; black
+ sta $ffb0
+ lda #36 ; yellow
+ sta $ffb1
+ lda #18 ; green
  sta $ffb2
- lda #$55
+ lda #48 ; white
  sta $ffb3
 
  puls d,pc
@@ -82,7 +82,7 @@ loop@
  bne loop@
  puls d,x,u,pc
 
-* 320 x 225, 16 colors
+* 640 x 225, 4 colors
 * X is x
 * Y is y
 * B is color
@@ -96,23 +96,29 @@ pset
  tfr x,d
  asra
  rorb
- leau d,u
- bcs odd@
-* even
+ asra
+ rorb
+ leau d,u ; pointer to screen byte
+ tfr x,d
+ andb #$03
+ leax bytetbl1,pcr
+ leay bytetbl2,pcr
  lda ,u
- anda #$0F
- asl ,s
- asl ,s
- asl ,s
- asl ,s
- ora ,s+
+ anda b,x
  sta ,u
- rts
-* odd
-odd@
- lda ,u
- anda #$F0
- ora ,s+
+ lda ,s
+ anda b,y
+ ora ,u
  sta ,u
- rts
+ puls b,pc
 
+bytetbl1
+ fcb $3F
+ fcb $CF
+ fcb $F3
+ fcb $FC
+bytetbl2
+ fcb $C0
+ fcb $30
+ fcb $0C
+ fcb $03
