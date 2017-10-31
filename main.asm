@@ -1,3 +1,8 @@
+BLACK	equ %00000000
+AMBER	equ %01010101
+GREEN	equ %10101010
+WHITE	equ %11111111
+
 clrd MACRO
 	clra
 	clrb
@@ -23,6 +28,11 @@ i	rmb 2
 j	rmb 2
 su	rmb 2
 color	rmb 1
+xstring rmb 1
+ystring rmb 1
+xpos	rmb 2
+ypos	rmb 2
+rowdata	rmb 1
 
 * Program
 
@@ -50,119 +60,62 @@ start
 
 	* clear screen
 loop
-	lda #%00000000
+	lda #BLACK
 	sta color
 	lbsr gfxclear
 
-	* UP
-	ldd #310
+	lda #WHITE
+	sta color
+	ldd #0
 	std x1
-	ldd #112
 	std y1
-	ldd #310
+	std y2
+	ldd #639
+	std x2
+	lbsr line
+
+	ldd #0
+	std x1
+	std y1
+	std x2
+	ldd #254
+	std y2
+	lbsr line
+
+	ldd #0
+	std x1
+	ldd #224
+	std y1
+	std y2
+	ldd #639
+	std x2
+	lbsr line
+
+	ldd #639
+	std x1
 	std x2
 	ldd #0
-	std y2
-	lda #%11111111
-	sta color
-	lbsr line
-
-	* LEFT
-	ldd #310
-	std x1
-	ldd #112
 	std y1
-	ldd #0
-	std x2
-	ldd #112
-	std y2
-	lda #%11111111
-	sta color
-	lbsr line
-
-	* RIGHT
-	ldd #310
-	std x1
-	ldd #112
-	std y1
-	ldd #619
-	std x2
-	ldd #112
-	std y2
-	lda #%11111111
-	sta color
-	lbsr line
-
-	* DOWN
-	ldd #310
-	std x1
-	ldd #112
-	std y1
-	ldd #310
-	std x2
 	ldd #224
 	std y2
-	lda #%11111111
-	sta color
 	lbsr line
 
-	* UPPER LEFT
-	ldd #310
-	std x1
-	ldd #112
-	std y1
-	ldd #0
-	std x2
-	ldd #0
-	std y2
-	lda #%01010101
+	ldd #1
+	tfr d,x
+	tfr d,y
+	lda #GREEN
 	sta color
-	lbsr line
+	leau stest1,pcr
+	lbsr DrawString5x5
 
-	* LOWER RIGHT
-	ldd #310
-	std x1
-	ldd #112
-	std y1
-	ldd #619
-	std x2
-	ldd #224
-	std y2
-	lda #%01010101
+	ldd #1
+	tfr d,x
+	ldd #2
+	tfr d,y
+	lda #AMBER
 	sta color
-	lbsr line
-
-	* UPPER RIGHT
-	ldd #310
-	std x1
-	ldd #112
-	std y1
-	ldd #619
-	std x2
-	ldd #0
-	std y2
-	lda #%01010101
-	sta color
-	lbsr line
-
-	* LOWER LEFT
-	ldd #310
-	std x1
-	ldd #112
-	std y1
-	ldd #0
-	std x2
-	ldd #224
-	std y2
-	lda #%01010101
-	sta color
-	lbsr line
-	
-	lbsr keywait
-
-	lda #%01010101
-	sta color
-	lbsr gfxclear
+	leau stest2,pcr
+	lbsr DrawString5x5
 
 	lbsr keywait
 
@@ -180,9 +133,17 @@ loop
 
 	lbra loop
 
+stest1 fcc "THE QUICK BROWN FOX JUMPED OVER THE #LAZY DOG. 0123.456789"
+ fcb 0
+stest2 fcc "NOW: IS THE TIME, FOR ALL GOOD MEN TO COME TO THE AID OF THEIR PARTY!"
+ fcb 0
+
+ * fcc " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:,.!#"
+
 	include	utils.asm
 	include graphics.asm
 	include line.asm
+	include font.asm
 
 * Screen $7000
 
