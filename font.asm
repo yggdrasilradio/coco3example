@@ -1,37 +1,61 @@
 
-; X x position
-; Y y position
+; currw current window
 ; U string
 ; color color
-DrawString5x5
+DrawString
 
 loop@
  ldb ,u+
- beq xDrawString5x5
- lbsr DrawChar5x5
- leax 1,x
+ beq xDrawString
+ lbsr DrawChar
  bra loop@
 
-xDrawString5x5
+xDrawString
  rts
 
-; X x position
-; Y y position
 ; B character
 ; color color
-DrawChar5x5
+; currw window
+DrawChar
  pshs d,x,y,u
 
-* convert row/column to pixel offsets
  pshs b
- tfr x,d
+
+* Get current window
+ ldu currw
+
+* Carriage return
+ cmpb #13
+ bne no@
+ clr 4,u ; XCURSOR
+ inc 5,u ; YCURSOR
+* Need scrolling?
+ ;lda 5,u ; YCURSOR
+ ;cmpa 3,u ; YHEIGHT
+ ;blo xDrawRow
+* Scroll window
+ ;dec 5,u ; YCURSOR
+ bra xDrawRow
+no@
+
+* Clip to window width
+ lda 4,u ; XCURSOR
+ cmpa 2,u ; XWIDTH
+ bhs xDrawRow
+
+* convert row/column to pixel offsets
+ ldb 4,u ; XCURSOR
+ addb ,u ; XSTART
  lda #6
  mul
  std x1
- tfr y,d
+
+ ldb 5,u ; YCURSOR
+ addb 1,u ; YSTART
  lda #7
  mul
  std y1
+
  puls b
 
 * point X to font data
@@ -65,15 +89,16 @@ DrawPixel
  bmi xDrawPixel
 
 * draw pixel
+ ldb color
  rol rowdata
- bcc no@
+ bcs no@
+ clrb
+no@
  pshs x
  ldx xpos
  ldy ypos
- ldb color
  lbsr pset
  puls x
-no@
 
 * next pixel
  ldd xpos
@@ -89,7 +114,13 @@ xDrawPixel
  std ypos
  bra DrawRow
 xDrawRow
- leas 1,s
+ ;leas 1,s
+ puls b
+ cmpb #32
+ blo no@
+ ldu currw
+ inc 4,u
+no@
 
  puls d,x,y,u,pc
 

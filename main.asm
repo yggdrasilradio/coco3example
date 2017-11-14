@@ -3,6 +3,8 @@ AMBER	equ %01010101
 GREEN	equ %10101010
 WHITE	equ %11111111
 
+* this macro doesn't work exactly right
+* asm thinks it's an illegal 6309 instruction
 clrd MACRO
 	clra
 	clrb
@@ -12,11 +14,6 @@ clrd MACRO
 
 	org 0
 
-* RAM storage
-
-	org $1000
-
-STACK	rmb 1
 x1	rmb 2
 y1	rmb 2
 x2	rmb 2
@@ -33,37 +30,87 @@ ystring rmb 1
 xpos	rmb 2
 ypos	rmb 2
 rowdata	rmb 1
+string	rmb 10
+currw	rmb 2
+irqcnt	rmb 1
+
+* RAM storage
+
+	org $1000
+
+STACK	rmb 1
+
+window0
+	rmb 1 ;  ,u XSTART
+	rmb 1 ; 1,u YSTART
+	rmb 1 ; 2,u XWIDTH
+	rmb 1 ; 3,u YHEIGHT
+	rmb 1 ; 4,u XCURSOR
+	rmb 1 ; 5,u YCURSOR
+	rmb 1 ; 6,u FILLPTR
+	rmb 1 ; 7,u EMPTPTR
+	rmb 256 ; 8,u BUFFER
+window1
+	rmb 1 ;  ,u XSTART
+	rmb 1 ; 1,u YSTART
+	rmb 1 ; 2,u XWIDTH
+	rmb 1 ; 3,u YHEIGHT
+	rmb 1 ; 4,u XCURSOR
+	rmb 1 ; 5,u YCURSOR
+	rmb 1 ; 6,u FILLPTR
+	rmb 1 ; 7,u EMPTPTR
+	rmb 256 ; 8,u BUFFER
+window2
+	rmb 1 ;  ,u XSTART
+	rmb 1 ; 1,u YSTART
+	rmb 1 ; 2,u XWIDTH
+	rmb 1 ; 3,u YHEIGHT
+	rmb 1 ; 4,u XCURSOR
+	rmb 1 ; 5,u YCURSOR
+	rmb 1 ; 6,u FILLPTR
+	rmb 1 ; 7,u EMPTPTR
+	rmb 256 ; 8,u BUFFER
+window3
+	rmb 1 ;  ,u XSTART
+	rmb 1 ; 1,u YSTART
+	rmb 1 ; 2,u XWIDTH
+	rmb 1 ; 3,u YHEIGHT
+	rmb 1 ; 4,u XCURSOR
+	rmb 1 ; 5,u YCURSOR
+	rmb 1 ; 6,u FILLPTR
+	rmb 1 ; 7,u EMPTPTR
+	rmb 256 ; 8,u BUFFER
 
 * Program
 
 	org $3000 
 
 start
-	* disable interrupts
-	orcc #$50
+	* Disable IRQ and FIRQ
+	orcc #%01010000
 
-	* relocate stack
+	* Relocate stack
 	lds #STACK
 
-	* set direct page
+	* Set direct page
 	clra
 	tfr a,dp
 
-	* turn off ROMs
+	* Turn off ROMs
 	lbsr romsoff
 
 	* 1.78 Mhz CPU
 	lbsr fast
 
-	* init graphics
+	* Init graphics
 	lbsr gfxinit
 
-	* clear screen
-loop
+	* Clear screen
 	lda #BLACK
 	sta color
 	lbsr gfxclear
 
+	* Draw borders
 	lda #WHITE
 	sta color
 	ldd #0
@@ -73,7 +120,6 @@ loop
 	ldd #639
 	std x2
 	lbsr line
-
 	ldd #0
 	std x1
 	std y1
@@ -81,7 +127,6 @@ loop
 	ldd #254
 	std y2
 	lbsr line
-
 	ldd #0
 	std x1
 	ldd #224
@@ -90,7 +135,6 @@ loop
 	ldd #639
 	std x2
 	lbsr line
-
 	ldd #639
 	std x1
 	std x2
@@ -99,51 +143,239 @@ loop
 	ldd #224
 	std y2
 	lbsr line
+	ldd #0
+	std x1
+	ldd #75
+	std y1
+	std y2
+	ldd #639
+	std x2
+	lbsr line
+	ldd #320
+	std x1
+	std x2
+	ldd #0
+	std y1
+	ldd #75
+	std y2
+	lbsr line
+	ldd #0
+	std x1
+	ldd #150
+	std y1
+	std y2
+	ldd #639
+	std x2
+	lbsr line
+	ldd #320
+	std x1
+	std x2
+	ldd #150
+	std y1
+	ldd #224
+	std y2
+	lbsr line
 
-	ldd #1
-	tfr d,x
-	tfr d,y
+	* Create windows
+
+	* Window 0
+	ldu #window0
+	lda #2	; XSTART
+	ldb #1	; YSTART
+	std ,u
+	lda #50	; XWIDTH
+	ldb #8	; YHEIGHT
+	std 2,u
+	clra	; XCURSOR
+	clrb	; YCURSOR
+	std 4,u
+	std 6,u ; FILLPTR / EMPTPTR
+
+	* Window 1
+	ldu #window1
+	lda #55	; XSTART
+	ldb #1	; YSTART
+	std ,u
+	lda #51	; XWIDTH
+	ldb #8	; YHEIGHT
+	std 2,u
+	clra	; XCURSOR
+	clrb	; YCURSOR
+	std 4,u
+	std 6,u ; FILLPTR / EMPTPTR
+
+	* Window 2
+	ldu #window2
+	lda #2	; XSTART
+	ldb #23	; YSTART
+	std ,u
+	lda #51	; XWIDTH
+	ldb #8	; YHEIGHT
+	std 2,u
+	clra	; XCURSOR
+	clrb	; YCURSOR
+	std 4,u
+	std 6,u ; FILLPTR / EMPTPTR
+
+	* Window 3
+	ldu #window3
+	lda #55 ; XSTART
+	ldb #23	; YSTART
+	std ,u
+	lda #51	; XWIDTH
+	ldb #8	; YHEIGHT
+	std 2,u
+	clra	; XCURSOR
+	clrb	; YCURSOR
+	std 4,u
+	std 6,u ; FILLPTR / EMPTPTR
+
+	* Set interrupt routine vector
+	leau IRQ,pcr
+	stu $10d
+	lda $ff03
+	ora #$03
+	sta $ff03
+
+	* Enable IRQ
+	andcc #%11101111
+
+	* Draw test strings in windows
+
+	* Window 0
+	ldu #window0
+	stu currw
 	lda #GREEN
 	sta color
-	leau stest1,pcr
-	lbsr DrawString5x5
+	leau stest0,pcr
+	lbsr DrawString
 
-	ldd #1
-	tfr d,x
-	ldd #2
-	tfr d,y
+	* Window 1
+	ldu #window1
+	stu currw
 	lda #AMBER
 	sta color
+	leau stest1,pcr
+	lbsr DrawString
+
+	* Window 2
+	ldu #window2
+	stu currw
+	lda #WHITE
+	sta color
 	leau stest2,pcr
-	lbsr DrawString5x5
+	lbsr DrawString
 
-	lbsr keywait
-
-	lda #%10101010
+	* Window 3
+	ldu #window3
+	stu currw
+	lda #GREEN
 	sta color
-	lbsr gfxclear
+	leau stest3,pcr
+	lbsr DrawString
 
-	lbsr keywait
-
-	lda #%11111111
+	lda #WHITE
 	sta color
-	lbsr gfxclear
 
+	* Read keyboard and echo characters to current window
+loop@
 	lbsr keywait
+	cmpa #81 ; Q
+	lbeq reset
+	tfr a,b
+	lbsr PutChar
+	bra loop@
 
-	lbra loop
+stest0	fcc "WINDOW 0"
+ fcb 13
+ fcc "LINE 1"
+ fcb 13,0
+stest1	fcc "WINDOW 1"
+ fcb 13
+ fcc "LINE 1"
+ fcb 13
+ fcc "LINE 2"
+ fcb 13
+ fcc "LINE 3"
+ fcb 13
+ fcc "LINE 4"
+ fcb 13
+ fcc "LINE 5"
+ fcb 13,0
+stest2	fcc "WINDOW 2"
+ fcb 13
+ fcc "LINE 1"
+ fcb 13
+ fcc "LINE 2"
+ fcb 13
+ fcc "LINE 3"
+ fcb 13
+ fcc "LINE 4"
+ fcb 13
+ fcc "LINE 5"
+ fcb 13,0
+stest3	fcc "WINDOW 3"
+ fcb 13
+ fcc "LINE 1"
+ fcb 13
+ fcc "LINE 2"
+ fcb 13
+ fcc "LINE 3"
+ fcb 13
+ fcc "LINE 4"
+ fcb 13
+ fcc "LINE 5"
+ fcb 13,0
 
-stest1 fcc "THE QUICK BROWN FOX JUMPED OVER THE #LAZY DOG. 0123.456789"
- fcb 0
-stest2 fcc "NOW: IS THE TIME, FOR ALL GOOD MEN TO COME TO THE AID OF THEIR PARTY!"
- fcb 0
+ include utils.asm
+ include graphics.asm
+ include line.asm
+ include font.asm
+ include strings.asm
 
- * fcc " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:,.!#"
+IRQ
+ orcc #%00010000 ; disable IRQ
+ pshs d,x,y,u
+ tst $ff02 ; dismiss interrupt
+ inc irqcnt
+ lbsr GetChar
+ tstb
+ beq no@
+ ldu #window0
+ stu currw
+ lda #WHITE
+ sta color
+ lbsr DrawChar
+no@
+ puls d,x,y,u
+ andcc #%11101111 ; enable IRQ
+ rti
 
-	include	utils.asm
-	include graphics.asm
-	include line.asm
-	include font.asm
+; currw current window
+; B character
+PutChar
+ pshs a,x,u
+ ldu currw
+ lda 6,u ; FILLPTR
+ leax 8,u ; BUFFER
+ stb a,x
+ inc 6,u ; FILLPTR
+ puls a,x,u,pc
+
+; currw current window
+; B character
+GetChar
+ pshs a,x,u
+ clrb
+ ldu currw
+ lda 7,u ; EMPTPTR
+ cmpa 6,u ; FILLPTR
+ beq no@
+ leax 8,u ; BUFFER
+ ldb a,x
+ inc 7,u ; EMPTPTR
+no@
+ puls a,x,u,pc
 
 * Screen $7000
 

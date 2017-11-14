@@ -4,15 +4,15 @@
 gfxinit
  pshs d
 
-; INITIALIZATION REGISTER $FF90
+; INITIALIZATION REGISTER 0 $FF90
 ; 0  Coco 1/2 compatible: NO
-; 1  MMU enabled: YES
+; 0  MMU enabled: YES
 ; 0  GIME IRQ enabled: NO
 ; 0  GIME FIRQ enabled: NO
 ; 1  RAM at FExx is constant: YES		 ???
 ; 0  standard SCS (spare chip select): OFF
 ; 00 ROM map control: 16k internal, 16K external ???
- ldb #$48
+ ldb #$08
  stb $FF90
 
 ; VIDEO MODE REGISTER $FF98
@@ -42,13 +42,13 @@ gfxinit
  clr $FF9F
 
 ; COLOR PALETTE REGISTERS $FFB0 - $FFBF
- lda #0	 ; black
+ lda #0		; BLACK
  sta $ffb0
- lda #36 ; yellow
+ lda #48 	; YELLOW
  sta $ffb1
- lda #18 ; green
+ lda #$12 	; GREEN $02 $10 $12
  sta $ffb2
- lda #48 ; white
+ lda #$3f 	; WHITE
  sta $ffb3
 
  puls d,pc

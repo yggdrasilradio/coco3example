@@ -40,3 +40,12 @@ absd
  addd #1
 no@
  rts
+
+reset
+	clra
+	tfr a,dp
+	clr $0071
+	lbsr slow
+	lbsr romson
+	jmp $8C1B
+
