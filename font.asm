@@ -1,4 +1,95 @@
 
+* Vertically scroll current window
+VScroll
+ pshs d,x,y,u
+ lbsr romsoff
+ ldu currw
+
+ * Point X to start of row
+ ldx #SCREEN
+ lda #7
+ ldb 1,u ; YSTART
+ mul
+ lda #160
+ mul
+ leax d,x
+ lda #6
+ ldb ,u ; XSTART
+ mul
+ asra
+ rorb
+ asra
+ rorb
+ leax d,x
+ stx ptr
+
+ lda 2,u ; XWIDTH
+ ldb #6
+ mul
+ asra
+ rorb
+ asra
+ rorb
+ asra
+ rorb
+ stb words
+
+ * For each row in window
+ lda 3,u ; YHEIGHT
+ pshs a
+VS0
+
+ * For each word in row
+ ldx ptr
+ ldb words
+ pshs b
+VS1
+
+ lda 1,s
+ deca
+ bne VSmove
+
+ clrb
+ std (0*160),x
+ std (1*160),x
+ std (2*160),x
+ std (3*160),x
+ std (4*160),x
+
+ bra VScont
+
+VSmove
+ ldd 1120+(0*160),x
+ std (0*160),x
+ ldd 1120+(1*160),x
+ std (1*160),x
+ ldd 1120+(2*160),x
+ std (2*160),x
+ ldd 1120+(3*160),x
+ std (3*160),x
+ ldd 1120+(4*160),x
+ std (4*160),x
+
+VScont
+
+ leax 2,x
+
+ * Next word in row
+ dec ,s
+ bne VS1
+ leas 1,s
+
+ * Next row in window
+ ldx ptr
+ leax 1120,x
+ stx ptr
+ dec ,s
+ bne VS0
+ leas 1,s
+
+ lbsr romson
+ puls d,x,y,u,pc
+
 ; currw current window
 ; U string
 ; color color
@@ -30,16 +121,18 @@ DrawChar
  clr 4,u ; XCURSOR
  inc 5,u ; YCURSOR
 * Need scrolling?
- ;lda 5,u ; YCURSOR
- ;cmpa 3,u ; YHEIGHT
- ;blo xDrawRow
+ lda 5,u ; YCURSOR
+ cmpa 3,u ; YHEIGHT
+ blo xDrawRow
 * Scroll window
- ;dec 5,u ; YCURSOR
+ lbsr VScroll
+ dec 5,u ; YCURSOR
  bra xDrawRow
 no@
 
 * Clip to window width
  lda 4,u ; XCURSOR
+ inca
  cmpa 2,u ; XWIDTH
  bhs xDrawRow
 

@@ -33,6 +33,9 @@ rowdata	rmb 1
 string	rmb 10
 currw	rmb 2
 irqcnt	rmb 1
+romflag	rmb 1
+ptr	rmb 2
+words	rmb 1
 
 * RAM storage
 
@@ -96,8 +99,8 @@ start
 	clra
 	tfr a,dp
 
-	* Turn off ROMs
-	lbsr romsoff
+	* Turn on ROMs
+	lbsr romson
 
 	* 1.78 Mhz CPU
 	lbsr fast
@@ -184,7 +187,7 @@ start
 	ldb #1	; YSTART
 	std ,u
 	lda #50	; XWIDTH
-	ldb #8	; YHEIGHT
+	ldb #9	; YHEIGHT
 	std 2,u
 	clra	; XCURSOR
 	clrb	; YCURSOR
@@ -197,7 +200,7 @@ start
 	ldb #1	; YSTART
 	std ,u
 	lda #51	; XWIDTH
-	ldb #8	; YHEIGHT
+	ldb #9	; YHEIGHT
 	std 2,u
 	clra	; XCURSOR
 	clrb	; YCURSOR
@@ -210,7 +213,7 @@ start
 	ldb #23	; YSTART
 	std ,u
 	lda #51	; XWIDTH
-	ldb #8	; YHEIGHT
+	ldb #9	; YHEIGHT
 	std 2,u
 	clra	; XCURSOR
 	clrb	; YCURSOR
@@ -223,7 +226,7 @@ start
 	ldb #23	; YSTART
 	std ,u
 	lda #51	; XWIDTH
-	ldb #8	; YHEIGHT
+	ldb #9	; YHEIGHT
 	std 2,u
 	clra	; XCURSOR
 	clrb	; YCURSOR
@@ -238,7 +241,7 @@ start
 	sta $ff03
 
 	* Enable IRQ
-	andcc #%11101111
+	andcc #%10101111
 
 	* Draw test strings in windows
 
@@ -276,6 +279,8 @@ start
 
 	lda #WHITE
 	sta color
+	ldu #window0
+	stu currw
 
 	* Read keyboard and echo characters to current window
 loop@
@@ -334,21 +339,15 @@ stest3	fcc "WINDOW 3"
  include strings.asm
 
 IRQ
- orcc #%00010000 ; disable IRQ
- pshs d,x,y,u
+ orcc #%01010000 ; disable IRQ
  tst $ff02 ; dismiss interrupt
  inc irqcnt
  lbsr GetChar
  tstb
  beq no@
- ldu #window0
- stu currw
- lda #WHITE
- sta color
  lbsr DrawChar
 no@
- puls d,x,y,u
- andcc #%11101111 ; enable IRQ
+ andcc #%10101111 ; enable IRQ
  rti
 
 ; currw current window

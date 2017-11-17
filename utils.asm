@@ -10,22 +10,25 @@ slow
 
 * Map system ROMs into memory
 romson
+ clr romflag
+ inc romflag
  sta $FFDE
  rts
 
 * Take system ROMs out of memory map, set all-RAM mode
 romsoff
+ clr romflag
  sta $FFDF
  rts
 
 * Wait for a key
 
 keywait
-	lbsr romson
+	;lbsr romson
 	jsr [$a000]
+	;lbsr romsoff
 	tsta
 	beq keywait
-	lbsr romsoff
 	rts
 
 * Wait forever

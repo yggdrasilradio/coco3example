@@ -61,6 +61,7 @@ gfxclear
  ldb color
  ldx #160*225
  ldu #SCREEN
+ lbsr romsoff
 loop@
  std ,u++
  std ,u++
@@ -80,6 +81,7 @@ loop@
  std ,u++
  leax -32,x
  bne loop@
+ lbsr romson
  puls d,x,u,pc
 
 * 640 x 225, 4 colors
@@ -103,6 +105,7 @@ pset
  andb #$03
  leax bytetbl1,pcr
  leay bytetbl2,pcr
+ lbsr romsoff
  lda ,u
  anda b,x
  sta ,u
@@ -110,6 +113,7 @@ pset
  anda b,y
  ora ,u
  sta ,u
+ lbsr romson
  puls b,pc
 
 bytetbl1
