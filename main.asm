@@ -301,7 +301,10 @@ loop@
 	lbsr PutChar
 	bra loop@
 
-stest0	fcc "WINDOW 0"
+stest0
+ fcb WHITE
+ fcc "WINDOW 0"
+ fcb GREEN
  fcb 13
  fcc "LINE 1"
  fcb 13
@@ -313,7 +316,10 @@ stest0	fcc "WINDOW 0"
  fcb 13
  fcc "LINE 5"
  fcb 13,0
-stest1	fcc "WINDOW 1"
+stest1
+ fcb WHITE
+ fcc "WINDOW 1"
+ fcb GREEN
  fcb 13
  fcc "LINE 1"
  fcb 13
@@ -325,7 +331,10 @@ stest1	fcc "WINDOW 1"
  fcb 13
  fcc "LINE 5"
  fcb 13,0
-stest2	fcc "WINDOW 2"
+stest2
+ fcb WHITE
+ fcc "WINDOW 2"
+ fcb AMBER
  fcb 13
  fcc "LINE 1"
  fcb 13
@@ -337,7 +346,10 @@ stest2	fcc "WINDOW 2"
  fcb 13
  fcc "LINE 5"
  fcb 13,0
-stest3	fcc "WINDOW 3"
+stest3
+ fcb WHITE
+ fcc "WINDOW 3"
+ fcb AMBER
  fcb 13
  fcc "LINE 1"
  fcb 13

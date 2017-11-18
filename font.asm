@@ -137,12 +137,28 @@ no@
  bne no@
  lda 4,u ; XCURSOR
  deca
- blt xDrawRow
+ lblt xDrawRow
  sta 4,u
  ldb #' '
  stb ,s
  inc ctrl
 no@
+
+* Color code?
+ cmpb #GREEN
+ beq yes@
+no1@
+ cmpb #AMBER
+ beq yes@
+no2@
+ cmpb #WHITE
+ beq yes@
+ bra no4@
+yes@
+ stb color
+ inc ctrl
+ lbra xDrawRow
+no4@
 
 * Clip to window width
  lda 4,u ; XCURSOR
