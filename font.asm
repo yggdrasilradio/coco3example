@@ -109,6 +109,7 @@ xDrawString
 ; currw window
 DrawChar
  pshs d,x,y,u
+ clr ctrl
 
  pshs b
 
@@ -118,16 +119,29 @@ DrawChar
 * Carriage return
  cmpb #13
  bne no@
+ inc ctrl
  clr 4,u ; XCURSOR
  inc 5,u ; YCURSOR
 * Need scrolling?
  lda 5,u ; YCURSOR
  cmpa 3,u ; YHEIGHT
- blo xDrawRow
+ lblo xDrawRow
 * Scroll window
  lbsr VScroll
  dec 5,u ; YCURSOR
- bra xDrawRow
+ lbra xDrawRow
+no@
+
+* Backspace?
+ cmpb #8
+ bne no@
+ lda 4,u ; XCURSOR
+ deca
+ blt xDrawRow
+ sta 4,u
+ ldb #' '
+ stb ,s
+ inc ctrl
 no@
 
 * Clip to window width
@@ -156,6 +170,8 @@ no@
  leax font-5,pcr
 loop@
  leax 5,x
+ tst ,u
+ beq xDrawChar
  cmpb ,u+
  bne loop@
 
@@ -207,18 +223,20 @@ xDrawPixel
  std ypos
  bra DrawRow
 xDrawRow
- ;leas 1,s
- puls b
- cmpb #32
- blo no@
+ tst ctrl ; don't advance cursor for control characters
+ bne no@
  ldu currw
- inc 4,u
+ inc 4,u ; XCURSOR
 no@
+ puls b
 
+xDrawChar
  puls d,x,y,u,pc
 
 charset
  fcc " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:,.!#"
+ fcb 0
+* missing "$%&'()*=-<>?/
 
 font
  fcb 0x00,0x00,0x00,0x00,0x00 ;  (space)

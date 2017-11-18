@@ -36,6 +36,7 @@ irqcnt	rmb 1
 romflag	rmb 1
 ptr	rmb 2
 words	rmb 1
+ctrl	rmb 1
 
 * RAM storage
 
@@ -233,11 +234,20 @@ start
 	std 4,u
 	std 6,u ; FILLPTR / EMPTPTR
 
-	* Set interrupt routine vector
+	* Set IRQ interrupt vector
+	lda #$7e
+	sta $10c
 	leau IRQ,pcr
 	stu $10d
+
+	* Disable HSYNC
+	lda $ff01
+	anda #$fe
+	sta $ff01
+
+	* Enable VSYNC
 	lda $ff03
-	ora #$03
+	ora #$01
 	sta $ff03
 
 	* Enable IRQ
@@ -340,13 +350,13 @@ stest3	fcc "WINDOW 3"
 
 IRQ
  orcc #%01010000 ; disable IRQ
- tst $ff02 ; dismiss interrupt
  inc irqcnt
  lbsr GetChar
  tstb
  beq no@
  lbsr DrawChar
 no@
+ tst $ff02 ; dismiss interrupt
  andcc #%10101111 ; enable IRQ
  rti
 
