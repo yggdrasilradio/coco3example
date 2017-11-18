@@ -304,6 +304,14 @@ loop@
 stest0	fcc "WINDOW 0"
  fcb 13
  fcc "LINE 1"
+ fcb 13
+ fcc "LINE 2"
+ fcb 13
+ fcc "LINE 3"
+ fcb 13
+ fcc "LINE 4"
+ fcb 13
+ fcc "LINE 5"
  fcb 13,0
 stest1	fcc "WINDOW 1"
  fcb 13
