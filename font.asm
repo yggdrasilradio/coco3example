@@ -145,17 +145,20 @@ no@
 no@
 
 * Color code?
- cmpb #GREEN
+ lda #GREEN
+ cmpb #FONTGREEN
  beq yes@
 no1@
- cmpb #AMBER
+ lda #AMBER
+ cmpb #FONTAMBER
  beq yes@
 no2@
- cmpb #WHITE
+ lda #WHITE
+ cmpb #FONTWHITE
  beq yes@
  bra no4@
 yes@
- stb color
+ sta color
  inc ctrl
  lbra xDrawRow
 no4@

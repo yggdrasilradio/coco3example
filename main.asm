@@ -3,6 +3,10 @@ AMBER	equ %01010101
 GREEN	equ %10101010
 WHITE	equ %11111111
 
+FONTAMBER equ 1
+FONTGREEN equ 2
+FONTWHITE equ 3
+
 * this macro doesn't work exactly right
 * asm thinks it's an illegal 6309 instruction
 clrd MACRO
@@ -258,35 +262,28 @@ start
 	* Window 0
 	ldu #window0
 	stu currw
-	lda #GREEN
-	sta color
 	leau stest0,pcr
 	lbsr DrawString
 
 	* Window 1
 	ldu #window1
 	stu currw
-	lda #AMBER
-	sta color
 	leau stest1,pcr
 	lbsr DrawString
 
 	* Window 2
 	ldu #window2
 	stu currw
-	lda #WHITE
-	sta color
 	leau stest2,pcr
 	lbsr DrawString
 
 	* Window 3
 	ldu #window3
 	stu currw
-	lda #GREEN
-	sta color
 	leau stest3,pcr
 	lbsr DrawString
 
+	* Window for keyboard input
 	lda #WHITE
 	sta color
 	ldu #window0
@@ -295,16 +292,16 @@ start
 	* Read keyboard and echo characters to current window
 loop@
 	lbsr keywait
-	cmpa #81 ; Q
+	cmpa #3 ; BREAK
 	lbeq reset
 	tfr a,b
 	lbsr PutChar
 	bra loop@
 
 stest0
- fcb WHITE
+ fcb FONTWHITE
  fcc "WINDOW 0"
- fcb GREEN
+ fcb FONTGREEN
  fcb 13
  fcc "LINE 1"
  fcb 13
@@ -317,9 +314,9 @@ stest0
  fcc "LINE 5"
  fcb 13,0
 stest1
- fcb WHITE
+ fcb FONTWHITE
  fcc "WINDOW 1"
- fcb GREEN
+ fcb FONTGREEN
  fcb 13
  fcc "LINE 1"
  fcb 13
@@ -332,9 +329,9 @@ stest1
  fcc "LINE 5"
  fcb 13,0
 stest2
- fcb WHITE
+ fcb FONTWHITE
  fcc "WINDOW 2"
- fcb AMBER
+ fcb FONTAMBER
  fcb 13
  fcc "LINE 1"
  fcb 13
@@ -347,9 +344,9 @@ stest2
  fcc "LINE 5"
  fcb 13,0
 stest3
- fcb WHITE
+ fcb FONTWHITE
  fcc "WINDOW 3"
- fcb AMBER
+ fcb FONTAMBER
  fcb 13
  fcc "LINE 1"
  fcb 13
