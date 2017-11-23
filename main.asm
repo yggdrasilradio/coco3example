@@ -41,6 +41,7 @@ romflag	rmb 1
 ptr	rmb 2
 words	rmb 1
 ctrl	rmb 1
+seed	rmb 2
 
 * RAM storage
 
@@ -300,6 +301,9 @@ start
 
 	* Read keyboard and echo characters to Window 0
 loop@
+	ldd seed
+	addd #1
+	std seed
 	lbsr keywait
 	cmpa #3 ; BREAK
 	lbeq reset
@@ -383,6 +387,7 @@ IRQ
  pshs u
  inc irqcnt
 
+* Update window 0
  ldu #window0
  stu currw
  lbsr GetChar
@@ -392,6 +397,7 @@ IRQ
  lbsr DrawChar
 no@
 
+* Update window 1
  ldu #window1
  stu currw
  lbsr GetChar
@@ -401,6 +407,7 @@ no@
  lbsr DrawChar
 no@
 
+* Update window 2
  ldu #window2
  stu currw
  lbsr GetChar
@@ -410,6 +417,7 @@ no@
  lbsr DrawChar
 no@
 
+* Update window 3
  ldu #window3
  stu currw
  lbsr GetChar
@@ -417,6 +425,58 @@ no@
  beq no@
  tfr a,b
  lbsr DrawChar
+no@
+
+* Once a second, random chance of lines in window 0
+ lda irqcnt
+ anda #%00011111
+ bne no@
+ lbsr rand
+ anda #$03
+ bne no@
+ ldu #window0
+ stu currw
+ leau stest0,pcr
+ lbsr DrawString
+no@
+
+* Once a second, random chance of lines in window 1
+ lda irqcnt
+ anda #%00011111
+ bne no@
+ lbsr rand
+ anda #$03
+ bne no@
+ ldu #window1
+ stu currw
+ leau stest1,pcr
+ lbsr DrawString
+no@
+
+* Once a second, random chance of lines in window 2
+ lda irqcnt
+ anda #%00011111
+ bne no@
+ lbsr rand
+ anda #$03
+ bne no@
+ ldu #window2
+ stu currw
+ leau stest2,pcr
+ lbsr DrawString
+no@
+
+* Once a second, random chance of lines in window 3
+ lda irqcnt
+ anda #%00011111
+ bne no@
+ lbsr rand
+ anda #$03
+ bne no@
+ ldu #window3
+ stu currw
+ leau stest3,pcr
+ lbsr DrawString
 no@
 
  tst $ff02 ; dismiss interrupt
