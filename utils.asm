@@ -24,9 +24,7 @@ romsoff
 * Wait for a key
 
 keywait
-	;lbsr romson
 	jsr [$a000]
-	;lbsr romsoff
 	tsta
 	beq keywait
 	rts

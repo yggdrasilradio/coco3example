@@ -8,13 +8,13 @@ VScroll
  * Point X to start of row
  ldx #SCREEN
  lda #7
- ldb 1,u ; YSTART
+ ldb YSTART,u
  mul
  lda #160
  mul
  leax d,x
  lda #6
- ldb ,u ; XSTART
+ ldb XSTART,u
  mul
  asra
  rorb
@@ -23,7 +23,7 @@ VScroll
  leax d,x
  stx ptr
 
- lda 2,u ; XWIDTH
+ lda XWIDTH,u
  ldb #6
  mul
  asra
@@ -35,7 +35,7 @@ VScroll
  stb words
 
  * For each row in window
- lda 3,u ; YHEIGHT
+ lda YHEIGHT,u ; YHEIGHT
  pshs a
 VS0
 
@@ -96,16 +96,15 @@ VScont
 DrawString
 
 loop@
- ldb ,u+
+ lda ,u+
  beq xDrawString
- lbsr DrawChar
+ lbsr PutChar
  bra loop@
 
 xDrawString
  rts
 
 ; B character
-; color color
 ; currw window
 DrawChar
  pshs d,x,y,u
@@ -120,25 +119,25 @@ DrawChar
  cmpb #13
  bne no@
  inc ctrl
- clr 4,u ; XCURSOR
- inc 5,u ; YCURSOR
+ clr XCURSOR,u
+ inc YCURSOR,u
 * Need scrolling?
- lda 5,u ; YCURSOR
- cmpa 3,u ; YHEIGHT
+ lda YCURSOR,u
+ cmpa YHEIGHT,u
  lblo xDrawRow
 * Scroll window
  lbsr VScroll
- dec 5,u ; YCURSOR
+ dec YCURSOR,u
  lbra xDrawRow
 no@
 
 * Backspace?
  cmpb #8
  bne no@
- lda 4,u ; XCURSOR
+ lda XCURSOR,u ; XCURSOR
  deca
  lblt xDrawRow
- sta 4,u
+ sta XCURSOR,u
  ldb #' '
  stb ,s
  inc ctrl
@@ -158,26 +157,26 @@ no2@
  beq yes@
  bra no4@
 yes@
- sta color
+ sta COLOR,u
  inc ctrl
  lbra xDrawRow
 no4@
 
 * Clip to window width
- lda 4,u ; XCURSOR
+ lda XCURSOR,u
  inca
- cmpa 2,u ; XWIDTH
+ cmpa XWIDTH,u
  bhs xDrawRow
 
 * convert row/column to pixel offsets
- ldb 4,u ; XCURSOR
- addb ,u ; XSTART
+ ldb XCURSOR,u
+ addb XSTART,u
  lda #6
  mul
  std x1
 
- ldb 5,u ; YCURSOR
- addb 1,u ; YSTART
+ ldb YCURSOR,u ; YCURSOR
+ addb YSTART,u ; YSTART
  lda #7
  mul
  std y1
@@ -193,6 +192,8 @@ loop@
  beq xDrawChar
  cmpb ,u+
  bne loop@
+
+ ldu currw
 
 * for each row
  ldd y1
@@ -217,7 +218,8 @@ DrawPixel
  bmi xDrawPixel
 
 * draw pixel
- ldb color
+ ldu currw
+ ldb COLOR,u
  rol rowdata
  bcs no@
  clrb
@@ -245,7 +247,7 @@ xDrawRow
  tst ctrl ; don't advance cursor for control characters
  bne no@
  ldu currw
- inc 4,u ; XCURSOR
+ inc XCURSOR,u
 no@
  puls b
 

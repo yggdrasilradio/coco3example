@@ -48,6 +48,17 @@ ctrl	rmb 1
 
 STACK	rmb 1
 
+XSTART equ 0
+YSTART equ 1
+XWIDTH equ 2
+YHEIGHT equ 3
+XCURSOR equ 4
+YCURSOR equ 5
+FILLPTR equ 6
+EMPTPTR equ 7
+COLOR equ 8
+BUFFER equ 9
+
 window0
 	rmb 1 ;  ,u XSTART
 	rmb 1 ; 1,u YSTART
@@ -57,7 +68,8 @@ window0
 	rmb 1 ; 5,u YCURSOR
 	rmb 1 ; 6,u FILLPTR
 	rmb 1 ; 7,u EMPTPTR
-	rmb 256 ; 8,u BUFFER
+	rmb 1 ; 8,u COLOR
+	rmb 256 ; 9,u BUFFER
 window1
 	rmb 1 ;  ,u XSTART
 	rmb 1 ; 1,u YSTART
@@ -67,7 +79,8 @@ window1
 	rmb 1 ; 5,u YCURSOR
 	rmb 1 ; 6,u FILLPTR
 	rmb 1 ; 7,u EMPTPTR
-	rmb 256 ; 8,u BUFFER
+	rmb 1 ; 8,u COLOR
+	rmb 256 ; 9,u BUFFER
 window2
 	rmb 1 ;  ,u XSTART
 	rmb 1 ; 1,u YSTART
@@ -77,7 +90,8 @@ window2
 	rmb 1 ; 5,u YCURSOR
 	rmb 1 ; 6,u FILLPTR
 	rmb 1 ; 7,u EMPTPTR
-	rmb 256 ; 8,u BUFFER
+	rmb 1 ; 8,u COLOR
+	rmb 256 ; 9,u BUFFER
 window3
 	rmb 1 ;  ,u XSTART
 	rmb 1 ; 1,u YSTART
@@ -87,7 +101,8 @@ window3
 	rmb 1 ; 5,u YCURSOR
 	rmb 1 ; 6,u FILLPTR
 	rmb 1 ; 7,u EMPTPTR
-	rmb 256 ; 8,u BUFFER
+	rmb 1 ; 8,u COLOR
+	rmb 256 ; 9,u BUFFER
 
 * Program
 
@@ -283,18 +298,15 @@ start
 	leau stest3,pcr
 	lbsr DrawString
 
-	* Window for keyboard input
-	lda #WHITE
-	sta color
-	ldu #window0
-	stu currw
-
-	* Read keyboard and echo characters to current window
+	* Read keyboard and echo characters to Window 0
 loop@
 	lbsr keywait
 	cmpa #3 ; BREAK
 	lbeq reset
-	tfr a,b
+	ldu #window0
+	stu currw
+	ldb #WHITE
+	stb COLOR,u
 	lbsr PutChar
 	bra loop@
 
@@ -367,41 +379,79 @@ stest3
 
 IRQ
  orcc #%01010000 ; disable IRQ
+ ldu currw
+ pshs u
  inc irqcnt
+
+ ldu #window0
+ stu currw
  lbsr GetChar
- tstb
+ tsta
  beq no@
+ tfr a,b
  lbsr DrawChar
 no@
+
+ ldu #window1
+ stu currw
+ lbsr GetChar
+ tsta
+ beq no@
+ tfr a,b
+ lbsr DrawChar
+no@
+
+ ldu #window2
+ stu currw
+ lbsr GetChar
+ tsta
+ beq no@
+ tfr a,b
+ lbsr DrawChar
+no@
+
+ ldu #window3
+ stu currw
+ lbsr GetChar
+ tsta
+ beq no@
+ tfr a,b
+ lbsr DrawChar
+no@
+
  tst $ff02 ; dismiss interrupt
+ puls u
+ stu currw
  andcc #%10101111 ; enable IRQ
  rti
 
 ; currw current window
-; B character
+; A character
 PutChar
- pshs a,x,u
+ pshs b,x,u
  ldu currw
- lda 6,u ; FILLPTR
- leax 8,u ; BUFFER
- stb a,x
- inc 6,u ; FILLPTR
- puls a,x,u,pc
+ ldb FILLPTR,u
+ leax BUFFER,u
+ abx
+ sta ,x
+ inc FILLPTR,u
+ puls b,x,u,pc
 
 ; currw current window
-; B character
+; A character
 GetChar
- pshs a,x,u
- clrb
+ pshs b,x,u
+ clra
  ldu currw
- lda 7,u ; EMPTPTR
- cmpa 6,u ; FILLPTR
+ ldb EMPTPTR,u
+ cmpb FILLPTR,u
  beq no@
- leax 8,u ; BUFFER
- ldb a,x
- inc 7,u ; EMPTPTR
+ leax BUFFER,u
+ abx
+ lda ,x
+ inc EMPTPTR,u
 no@
- puls a,x,u,pc
+ puls b,x,u,pc
 
 * Screen $7000
 
