@@ -104,6 +104,17 @@ window3
 	rmb 1 ; 7,u EMPTPTR
 	rmb 1 ; 8,u COLOR
 	rmb 256 ; 9,u BUFFER
+window4
+	rmb 1 ;  ,u XSTART
+	rmb 1 ; 1,u YSTART
+	rmb 1 ; 2,u XWIDTH
+	rmb 1 ; 3,u YHEIGHT
+	rmb 1 ; 4,u XCURSOR
+	rmb 1 ; 5,u YCURSOR
+	rmb 1 ; 6,u FILLPTR
+	rmb 1 ; 7,u EMPTPTR
+	rmb 1 ; 8,u COLOR
+	rmb 256 ; 9,u BUFFER
 
 * Program
 
@@ -254,6 +265,19 @@ start
 	std 4,u
 	std 6,u ; FILLPTR / EMPTPTR
 
+	* Window 4
+	ldu #window4
+	lda #2  ; XSTART
+	ldb #20 ; YSTART
+	std ,u
+	lda #51	; XWIDTH
+	ldb #1	; YHEIGHT
+	std 2,u
+	clra	; XCURSOR
+	clrb	; YCURSOR
+	std 4,u
+	std 6,u ; FILLPTR / EMPTPTR
+
 	* Set IRQ interrupt vector
 	lda #$7e
 	sta $10c
@@ -307,7 +331,7 @@ loop@
 	lbsr keywait
 	cmpa #3 ; BREAK
 	lbeq reset
-	ldu #window0
+	ldu #window4
 	stu currw
 	ldb #WHITE
 	stb COLOR,u
@@ -419,6 +443,16 @@ no@
 
 * Update window 3
  ldu #window3
+ stu currw
+ lbsr GetChar
+ tsta
+ beq no@
+ tfr a,b
+ lbsr DrawChar
+no@
+
+* Update window 4
+ ldu #window4
  stu currw
  lbsr GetChar
  tsta
