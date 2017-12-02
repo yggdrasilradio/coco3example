@@ -461,6 +461,22 @@ no@
  lbsr DrawChar
 no@
 
+* Every half second, blink cursor in window 4
+ lda irqcnt
+ anda #%00001111
+ bne no@
+ lda irqcnt
+ anda #%00011111
+ bne curoff@
+ ldb #'*'
+ bra drawcur@
+curoff@
+ ldb #' '
+drawcur@
+ lbsr DrawChar
+ dec XCURSOR,u
+no@
+
 * Once a second, random chance of lines in window 0
  lda irqcnt
  anda #%00011111
