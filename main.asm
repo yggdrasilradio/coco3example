@@ -323,7 +323,11 @@ start
 	leau stest3,pcr
 	lbsr DrawString
 
-	* Read keyboard and echo characters to Window 0
+	* Read keyboard and echo characters to Window 4
+	ldu #window4
+	stu currw
+	ldb #WHITE
+	stb COLOR,u
 loop@
 	ldd seed
 	addd #1
@@ -331,10 +335,6 @@ loop@
 	lbsr keywait
 	cmpa #3 ; BREAK
 	lbeq reset
-	ldu #window4
-	stu currw
-	ldb #WHITE
-	stb COLOR,u
 	lbsr PutChar
 	bra loop@
 
@@ -407,6 +407,10 @@ stest3
 
 IRQ
  orcc #%01010000 ; disable IRQ
+
+ ;lda #100
+ ;sta $ff9a
+
  ldu currw
  pshs u
  inc irqcnt
@@ -532,6 +536,10 @@ no@
  tst $ff02 ; dismiss interrupt
  puls u
  stu currw
+
+ ;lda #0
+ ;sta $ff9a
+
  andcc #%10101111 ; enable IRQ
  rti
 
