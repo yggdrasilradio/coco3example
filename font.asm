@@ -134,12 +134,17 @@ no@
 * Backspace?
  cmpb #8
  bne no@
- lda XCURSOR,u ; XCURSOR
+ lda XCURSOR,u
  deca
- lblt xDrawRow
+ lblt xDrawRow ; don't backspace past left margin
+ lda XCURSOR,u
+ pshs a
+ ldb #' '
+ lbsr DrawChar ; wipe out cursor
+ puls a
+ deca
  sta XCURSOR,u
  ldb #' '
- stb ,s
  inc ctrl
 no@
 

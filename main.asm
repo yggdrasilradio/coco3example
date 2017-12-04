@@ -42,6 +42,7 @@ ptr	rmb 2
 words	rmb 1
 ctrl	rmb 1
 seed	rmb 2
+curs	rmb 1
 
 * RAM storage
 
@@ -293,6 +294,9 @@ start
 	lda $ff03
 	ora #$01
 	sta $ff03
+	
+	* Enable cursor
+	lbsr curson
 
 	* Enable IRQ
 	andcc #%10101111
@@ -466,6 +470,8 @@ no@
 no@
 
 * Every half second, blink cursor in window 4
+ tst curs
+ beq no@
  lda irqcnt
  anda #%00001111
  bne no@

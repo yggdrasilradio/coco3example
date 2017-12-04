@@ -1,3 +1,14 @@
+* Enable cursor
+curson
+ clr curs
+ inc curs
+ rts
+
+* Disable cursor
+cursoff
+ clr curs
+ rts
+
 * Set CPU to 1.79 Mhz
 fast
  sta $FFD9
