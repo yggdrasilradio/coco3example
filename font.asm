@@ -109,7 +109,6 @@ xDrawString
 DrawChar
  pshs d,x,y,u
  clr ctrl
-
  pshs b
 
 * Get current window
@@ -171,20 +170,31 @@ no4@
  lda XCURSOR,u
  inca
  cmpa XWIDTH,u
- bhs xDrawRow
+ lbhs xDrawRow
 
 * convert row/column to pixel offsets
- ldb XCURSOR,u
- addb XSTART,u
- lda #6
- mul
- std x1
 
- ldb YCURSOR,u ; YCURSOR
- addb YSTART,u ; YSTART
+ ldx #SCREEN
+ ldb YCURSOR,u
+ addb YSTART,u
  lda #7
  mul
- std y1
+ lda #160
+ mul
+ leax d,x
+
+ ldb XSTART,u
+ addb XCURSOR,u
+ andb #1
+ stb odd
+ ldb XSTART,u
+ addb XCURSOR,u
+ lda #3
+ mul
+ lsra
+ rorb
+ leax d,x
+ stx ptr
 
  puls b
 
@@ -198,8 +208,6 @@ loop@
  cmpb ,u+
  bne loop@
 
- ldu currw
-
 * for each row
  ldd y1
  std ypos
@@ -209,44 +217,51 @@ DrawRow
  dec ,s
  bmi xDrawRow
 
-* for each pixel in row
+* Clear row
+ ldu ptr
+ ldd #%0000000000001111
+ tst odd
+ beq even@
+* odd
+ ldd #%1111000000000000
+even@
+ lbsr romsoff
+ anda ,u
+ andb 1,u
+ std ,u
+ lbsr romson
+
  ldb ,x+
- rolb
- stb rowdata
- ldd x1
- std xpos
- lda #5
- pshs a
-
-DrawPixel
- dec ,s
- bmi xDrawPixel
-
-* draw pixel
+ lsrb
+ leau fmasks,pcr
+ ldd b,u
+ ldy ptr
+ tst odd
+ beq even@
+* odd, shift over 4 bits
+ lsra
+ rorb
+ lsra
+ rorb
+ lsra
+ rorb
+ lsra
+ rorb
+even@
+* even
  ldu currw
- ldb COLOR,u
- rol rowdata
- bcs no@
- clrb
-no@
- pshs x
- ldx xpos
- ldy ypos
- lbsr pset
- puls x
-
-* next pixel
- ldd xpos
- addd #1
- std xpos
- bra DrawPixel
-xDrawPixel
- leas 1,s
+ anda COLOR,u
+ andb COLOR,u
+ lbsr romsoff
+ ora ,y
+ orb 1,y
+ std ,y
+ lbsr romson
 
 * next row
- ldd ypos
- addd #1
- std ypos
+ ldd ptr
+ addd #160
+ std ptr
  bra DrawRow
 xDrawRow
  tst ctrl ; don't advance cursor for control characters
@@ -260,9 +275,8 @@ xDrawChar
  puls d,x,y,u,pc
 
 charset
- fcc " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:,.!#*"
+ fcc " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:,.!#_"
  fcb 0
-* missing "$%&'()*=-<>?/
 
 font
  fcb 0x00,0x00,0x00,0x00,0x00 ;  (space)
@@ -308,3 +322,150 @@ font
  fcb 0x10,0x10,0x10,0x00,0x10 ;  !
  fcb 0x28,0x7c,0x28,0x7c,0x28 ;  #
  fcb 0x00,0x00,0x00,0x00,0x7c ;  (cursor)
+
+; B character
+; X x position in chars
+; Y y position in chars
+GfxChar
+ pshs d,x,y,u
+
+ pshs b
+
+* convert row/column to screen pointer
+
+ ldu #SCREEN
+ tfr y,d
+ lda #7
+ mul
+ lda #160
+ mul
+ leau d,u
+ tfr x,d
+ andb #1
+ stb odd
+ tfr x,d
+ lda #3
+ mul
+ lsra ; was asra
+ rorb
+ leau d,u
+ stu ptr
+
+ puls b
+
+* point X to font data
+ leau charset,pcr
+ leax font-5,pcr
+loop@
+ leax 5,x
+ tst ,u
+ beq xGfxChar
+ cmpb ,u+
+ bne loop@
+
+* for each row
+ lda #5
+ pshs a
+GfxRow
+ dec ,s
+ bmi xGfxRow
+
+* Clear row
+ ldu ptr
+ ldd #%0000000000001111
+ tst odd
+ beq even@
+* odd
+ ldd #%1111000000000000
+even@
+ lbsr romsoff
+ anda ,u
+ andb 1,u
+ std ,u
+ lbsr romson
+
+ ldb ,x+
+ lsrb
+ leau fmasks,pcr
+ ldd b,u
+ ldu ptr
+ tst odd
+ beq even@
+* odd, shift over 4 bits
+ lsra
+ rorb
+ lsra
+ rorb
+ lsra
+ rorb
+ lsra
+ rorb
+even@
+* even
+ lbsr romsoff
+ ora ,u
+ orb 1,u
+ std ,u
+ lbsr romson
+
+* next row
+ ldd ptr
+ addd #160
+ std ptr
+ bra GfxRow
+
+xGfxRow
+ puls b
+
+xGfxChar
+ puls d,x,y,u,pc
+
+; X x position in chars
+; Y y position in chars
+; U pointer to string
+GfxString
+ pshs d
+
+loop@
+ ldb ,u+
+ beq xGfxString
+ lbsr GfxChar
+ leax 1,x
+ bra loop@
+
+xGfxString
+ puls d,pc
+
+fmasks
+ fdb %0000000000000000
+ fdb %0000000011000000
+ fdb %0000001100000000
+ fdb %0000001111000000
+ fdb %0000110000000000
+ fdb %0000110011000000
+ fdb %0000111100000000
+ fdb %0000111111000000
+ fdb %0011000000000000
+ fdb %0011000011000000
+ fdb %0011001100000000
+ fdb %0011001111000000
+ fdb %0011110000000000
+ fdb %0011110011000000
+ fdb %0011111100000000
+ fdb %0011111111000000
+ fdb %1100000000000000
+ fdb %1100000011000000
+ fdb %1100001100000000
+ fdb %1100001111000000
+ fdb %1100110000000000
+ fdb %1100110011000000
+ fdb %1100111100000000
+ fdb %1100111111000000
+ fdb %1111000000000000
+ fdb %1111000011000000
+ fdb %1111001100000000
+ fdb %1111001111000000
+ fdb %1111110000000000
+ fdb %1111110011000000
+ fdb %1111111100000000
+ fdb %1111111111000000

@@ -37,12 +37,12 @@ rowdata	rmb 1
 string	rmb 10
 currw	rmb 2
 irqcnt	rmb 1
-romflag	rmb 1
 ptr	rmb 2
 words	rmb 1
 ctrl	rmb 1
 seed	rmb 2
-curs	rmb 1
+odd	rmb 1
+space	rmb 1
 
 * RAM storage
 
@@ -147,6 +147,7 @@ start
 	lbsr gfxclear
 
 	* Draw borders
+ lbra no@
 	lda #WHITE
 	sta color
 	ldd #0
@@ -211,16 +212,17 @@ start
 	ldd #224
 	std y2
 	lbsr line
+no@
 
 	* Create windows
 
 	* Window 0
 	ldu #window0
 	lda #2	; XSTART
-	ldb #1	; YSTART
+	ldb #2	; YSTART
 	std ,u
 	lda #50	; XWIDTH
-	ldb #9	; YHEIGHT
+	ldb #8	; YHEIGHT
 	std 2,u
 	clra	; XCURSOR
 	clrb	; YCURSOR
@@ -230,10 +232,10 @@ start
 	* Window 1
 	ldu #window1
 	lda #55	; XSTART
-	ldb #1	; YSTART
+	ldb #2	; YSTART
 	std ,u
 	lda #51	; XWIDTH
-	ldb #9	; YHEIGHT
+	ldb #8	; YHEIGHT
 	std 2,u
 	clra	; XCURSOR
 	clrb	; YCURSOR
@@ -243,10 +245,10 @@ start
 	* Window 2
 	ldu #window2
 	lda #2	; XSTART
-	ldb #23	; YSTART
+	ldb #24	; YSTART
 	std ,u
 	lda #51	; XWIDTH
-	ldb #9	; YHEIGHT
+	ldb #8	; YHEIGHT
 	std 2,u
 	clra	; XCURSOR
 	clrb	; YCURSOR
@@ -256,10 +258,10 @@ start
 	* Window 3
 	ldu #window3
 	lda #55 ; XSTART
-	ldb #23	; YSTART
+	ldb #24	; YSTART
 	std ,u
 	lda #51	; XWIDTH
-	ldb #9	; YHEIGHT
+	ldb #8	; YHEIGHT
 	std 2,u
 	clra	; XCURSOR
 	clrb	; YCURSOR
@@ -271,13 +273,14 @@ start
 	lda #2  ; XSTART
 	ldb #20 ; YSTART
 	std ,u
-	lda #51	; XWIDTH
+	lda #100 ; XWIDTH
 	ldb #1	; YHEIGHT
 	std 2,u
 	clra	; XCURSOR
 	clrb	; YCURSOR
 	std 4,u
 	std 6,u ; FILLPTR / EMPTPTR
+
 
 	* Set IRQ interrupt vector
 	lda #$7e
@@ -295,13 +298,28 @@ start
 	ora #$01
 	sta $ff03
 	
-	* Enable cursor
-	lbsr curson
-
 	* Enable IRQ
 	andcc #%10101111
 
 	* Draw test strings in windows
+
+	* Window titles
+	ldx #2
+	ldy #1
+	leau wtitle0,pcr
+	lbsr GfxString
+	ldx #55
+	ldy #1
+	leau wtitle1,pcr
+	lbsr GfxString
+	ldx #2
+	ldy #23
+	leau wtitle2,pcr
+	lbsr GfxString
+	ldx #55
+	ldy #23
+	leau wtitle3,pcr
+	lbsr GfxString
 
 	* Window 0
 	ldu #window0
@@ -343,11 +361,13 @@ loop@
 	bra loop@
 
 stest0
- fcb FONTWHITE
- fcc "WINDOW 0"
  fcb FONTGREEN
  fcb 13
- fcc "LINE 1"
+ fcc "THIS IS A "
+ fcb FONTAMBER
+ fcc "LONG LINE"
+ fcb FONTGREEN
+ fcc " FOR US, HERE"
  fcb 13
  fcc "LINE 2"
  fcb 13
@@ -356,10 +376,8 @@ stest0
  fcc "LINE 4"
  fcb 13
  fcc "LINE 5"
- fcb 13,0
+ fcb 0
 stest1
- fcb FONTWHITE
- fcc "WINDOW 1"
  fcb FONTGREEN
  fcb 13
  fcc "LINE 1"
@@ -371,11 +389,9 @@ stest1
  fcc "LINE 4"
  fcb 13
  fcc "LINE 5"
- fcb 13,0
+ fcb 0
 stest2
- fcb FONTWHITE
- fcc "WINDOW 2"
- fcb FONTAMBER
+ fcb FONTGREEN
  fcb 13
  fcc "LINE 1"
  fcb 13
@@ -386,11 +402,9 @@ stest2
  fcc "LINE 4"
  fcb 13
  fcc "LINE 5"
- fcb 13,0
+ fcb 0
 stest3
- fcb FONTWHITE
- fcc "WINDOW 3"
- fcb FONTAMBER
+ fcb FONTGREEN
  fcb 13
  fcc "LINE 1"
  fcb 13
@@ -401,7 +415,7 @@ stest3
  fcc "LINE 4"
  fcb 13
  fcc "LINE 5"
- fcb 13,0
+ fcb 0
 
  include utils.asm
  include graphics.asm
@@ -412,6 +426,7 @@ stest3
 IRQ
  orcc #%01010000 ; disable IRQ
 
+* Turn on border (DEBUG)
  ;lda #100
  ;sta $ff9a
 
@@ -470,15 +485,13 @@ no@
 no@
 
 * Every half second, blink cursor in window 4
- tst curs
- beq no@
  lda irqcnt
  anda #%00001111
  bne no@
  lda irqcnt
  anda #%00011111
  bne curoff@
- ldb #'*'
+ ldb #'_'
  bra drawcur@
 curoff@
  ldb #' '
@@ -543,6 +556,7 @@ no@
  puls u
  stu currw
 
+* Turn off border (DEBUG)
  ;lda #0
  ;sta $ff9a
 
@@ -576,6 +590,19 @@ GetChar
  inc EMPTPTR,u
 no@
  puls b,x,u,pc
+
+wtitle0
+ fcc "WINDOW 0:"
+ fcb 0
+wtitle1
+ fcc "WINDOW 1:"
+ fcb 0
+wtitle2
+ fcc "WINDOW 2:"
+ fcb 0
+wtitle3
+ fcc "WINDOW 3:"
+ fcb 0
 
 * Screen $7000
 
