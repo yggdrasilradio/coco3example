@@ -9,6 +9,7 @@ FONTWHITE equ 3
 
 * this macro doesn't work exactly right
 * asm thinks it's an illegal 6309 instruction
+* but this is how you'd do a macro, anyway
 clrd MACRO
 	clra
 	clrb
@@ -40,9 +41,9 @@ irqcnt	rmb 1
 ptr	rmb 2
 words	rmb 1
 ctrl	rmb 1
+bksp	rmb 1
 seed	rmb 2
 odd	rmb 1
-space	rmb 1
 
 * RAM storage
 
@@ -142,7 +143,7 @@ start
 	clr cmd
 
 	* Draw borders
- lbra no@
+; lbra no@
 	lda #WHITE
 	sta color
 	ldd #0
@@ -277,7 +278,6 @@ no@
 	lda $ff03
 	ora #$01
 	sta $ff03
-	
 
 	* Window titles
 	ldx #2
@@ -332,10 +332,6 @@ loop@
 	ldd seed
 	addd #1
 	std seed
-	;lbsr keywait
-	;cmpa #3 ; BREAK
-	;lbeq reset
-	;lbsr PutChar
 	bra loop@
 
 stest0
@@ -416,7 +412,7 @@ IRQ
  lbsr romsoff
  tsta
  beq nokey@
- clr ctrl
+ clr bksp
  cmpa #3 ; BREAK
  lbeq reset
  cmpa #8 ; BACKSPACE
@@ -425,13 +421,18 @@ IRQ
  beq nokey@
  dec ncmd
  lda #' '
- inc ctrl
+ inc bksp
 nobksp@
 * Store character in command buffer
  ldu #cmd
  ldb ncmd
- sta b,u
+ leau b,u
+ sta ,u
  clr 1,u
+ tst bksp
+ beq no@
+ clr ,u
+no@
 * Display character
  ldx #11
  ldb ncmd
@@ -442,7 +443,7 @@ nobksp@
  leax 1,x
  ldb #' '
  lbsr GfxChar
- tst ctrl
+ tst bksp
  bne nokey@
  inc ncmd
 nokey@
@@ -479,9 +480,25 @@ no@
  bne no@
  ldu #window0
  stu currw
- lbsr rand
- lbsr DrawHex
- lda #13
+ ;lbsr rand ; random hex number
+ ;lbsr DrawHex
+ ;lda #' ' ; space
+ ;lbsr PutChar
+ ldb ncmd ; number of characters in command buffer
+ lbsr DrawByte
+ lda #' ' ; space
+ lbsr PutChar
+ ldb cmd ; 1st char of command
+ lbsr DrawByte
+ lda #' ' ; space
+ lbsr PutChar
+ ldb cmd+1 ; 2nd char of command
+ lbsr DrawByte
+ lda #' ' ; space
+ lbsr PutChar
+ ldb cmd+2 ; 3rd char of command
+ lbsr DrawByte
+ lda #13 ; CRLF
  lbsr PutChar
  ;leau stest0,pcr
  ;lbsr DrawString

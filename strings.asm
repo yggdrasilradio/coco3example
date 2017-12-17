@@ -1,6 +1,7 @@
 ; B	value
 ; color	color
 ; currw	current window
+; BUG: THIS DOESN'T WORK FOR NUMBERS > 127
 DrawByte
 
  ldu #string
