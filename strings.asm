@@ -45,3 +45,46 @@ xloop@
  lbsr DrawString
 
  rts
+
+* D number
+* currw current window
+DrawHex
+ pshs d,x
+
+ ldu currw
+ ldb #GREEN
+ stb COLOR,u
+ ldb ,s
+ lsrb
+ lsrb
+ lsrb
+ lsrb
+ andb #$0f
+ leax hextbl,pcr
+ lda b,x
+ lbsr PutChar
+ ldb ,s
+ andb #$0f
+ leax hextbl,pcr
+ lda b,x
+ lbsr PutChar
+
+ ldb 1,s
+ lsrb
+ lsrb
+ lsrb
+ lsrb
+ andb #$0f
+ leax hextbl,pcr
+ lda b,x
+ lbsr PutChar
+ ldb 1,s
+ andb #$0f
+ leax hextbl,pcr
+ lda b,x
+ lbsr PutChar
+ puls d,x,pc
+
+hextbl
+ fcc "0123456789ABCDEF"
+

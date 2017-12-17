@@ -19,14 +19,6 @@ romsoff
  sta $FFDF
  rts
 
-* Wait for a key
-
-keywait
-	jsr [$a000]
-	tsta
-	beq keywait
-	rts
-
 * Wait forever
 halt bra halt
 
@@ -40,13 +32,14 @@ absd
 no@
  rts
 
+* Hard boot to RSDOS
 reset
-	clra
-	tfr a,dp
-	clr $0071
-	lbsr slow
-	lbsr romson
-	jmp $8C1B
+ clra
+ tfr a,dp
+ clr $0071
+ lbsr slow
+ lbsr romson
+ jmp $8C1B
 
 rndtbl   fcb   $af,$5b,$c1,$97,$d4,$cc,$30,$31,$51,$b8,$f3,$d0,$d4,$89,$ed,$1c
          fcb   $1b,$86,$b3,$8b,$72,$ad,$fe,$58,$0c,$42,$7b,$73,$38,$b0,$f9,$1b
@@ -65,16 +58,17 @@ rndtbl   fcb   $af,$5b,$c1,$97,$d4,$cc,$30,$31,$51,$b8,$f3,$d0,$d4,$89,$ed,$1c
          fcb   $d9,$81,$48,$a5,$05,$42,$07,$7c,$c7,$9a,$73,$e9,$cb,$af,$d0,$62
          fcb   $f9,$16,$b1,$b1,$bf,$63,$81,$c6,$33,$23,$5d,$5e,$93,$72,$9b,$19
 
+* D random number
 rand
-	pshs u
-	leau rndtbl,pcr
-	ldb seed
-	lda irqcnt
-	mul
-	adda irqcnt
-	addb irqcnt
-	eora b,u
-	eorb a,u
-	addd seed
-	std seed
-	puls u,pc
+ pshs u
+ leau rndtbl,pcr
+ ldb seed
+ lda irqcnt
+ mul
+ adda irqcnt
+ addb irqcnt
+ eora b,u
+ eorb a,u
+ addd seed
+ std seed
+ puls u,pc

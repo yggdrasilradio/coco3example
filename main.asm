@@ -49,6 +49,8 @@ space	rmb 1
 	org $1000
 
 STACK	rmb 1
+cmd	rmb 100
+ncmd	rmb 1
 
 XSTART equ 0
 YSTART equ 1
@@ -105,17 +107,6 @@ window3
 	rmb 1 ; 7,u EMPTPTR
 	rmb 1 ; 8,u COLOR
 	rmb 256 ; 9,u BUFFER
-window4
-	rmb 1 ;  ,u XSTART
-	rmb 1 ; 1,u YSTART
-	rmb 1 ; 2,u XWIDTH
-	rmb 1 ; 3,u YHEIGHT
-	rmb 1 ; 4,u XCURSOR
-	rmb 1 ; 5,u YCURSOR
-	rmb 1 ; 6,u FILLPTR
-	rmb 1 ; 7,u EMPTPTR
-	rmb 1 ; 8,u COLOR
-	rmb 256 ; 9,u BUFFER
 
 * Program
 
@@ -132,8 +123,8 @@ start
 	clra
 	tfr a,dp
 
-	* Turn on ROMs
-	lbsr romson
+	* Turn off ROMs
+	lbsr romsoff
 
 	* 1.78 Mhz CPU
 	lbsr fast
@@ -145,6 +136,10 @@ start
 	lda #BLACK
 	sta color
 	lbsr gfxclear
+
+	* Clear command buffer
+	clr ncmd
+	clr cmd
 
 	* Draw borders
  lbra no@
@@ -213,7 +208,6 @@ start
 	std y2
 	lbsr line
 no@
-
 	* Create windows
 
 	* Window 0
@@ -268,20 +262,6 @@ no@
 	std 4,u
 	std 6,u ; FILLPTR / EMPTPTR
 
-	* Window 4
-	ldu #window4
-	lda #2  ; XSTART
-	ldb #20 ; YSTART
-	std ,u
-	lda #100 ; XWIDTH
-	ldb #1	; YHEIGHT
-	std 2,u
-	clra	; XCURSOR
-	clrb	; YCURSOR
-	std 4,u
-	std 6,u ; FILLPTR / EMPTPTR
-
-
 	* Set IRQ interrupt vector
 	lda #$7e
 	sta $10c
@@ -298,10 +278,6 @@ no@
 	ora #$01
 	sta $ff03
 	
-	* Enable IRQ
-	andcc #%10101111
-
-	* Draw test strings in windows
 
 	* Window titles
 	ldx #2
@@ -320,44 +296,46 @@ no@
 	ldy #23
 	leau wtitle3,pcr
 	lbsr GfxString
+	ldx #2
+	ldy #20
+	leau wtitle4,pcr
+	lbsr GfxString
+
+	* Enable IRQ
+	andcc #%10101111
 
 	* Window 0
-	ldu #window0
-	stu currw
-	leau stest0,pcr
-	lbsr DrawString
+	;ldu #window0
+	;stu currw
+	;leau stest0,pcr
+	;lbsr DrawString
 
 	* Window 1
-	ldu #window1
-	stu currw
-	leau stest1,pcr
-	lbsr DrawString
+	;ldu #window1
+	;stu currw
+	;leau stest1,pcr
+	;lbsr DrawString
 
 	* Window 2
-	ldu #window2
-	stu currw
-	leau stest2,pcr
-	lbsr DrawString
+	;ldu #window2
+	;stu currw
+	;leau stest2,pcr
+	;lbsr DrawString
 
 	* Window 3
-	ldu #window3
-	stu currw
-	leau stest3,pcr
-	lbsr DrawString
+	;ldu #window3
+	;stu currw
+	;leau stest3,pcr
+	;lbsr DrawString
 
-	* Read keyboard and echo characters to Window 4
-	ldu #window4
-	stu currw
-	ldb #WHITE
-	stb COLOR,u
 loop@
 	ldd seed
 	addd #1
 	std seed
-	lbsr keywait
-	cmpa #3 ; BREAK
-	lbeq reset
-	lbsr PutChar
+	;lbsr keywait
+	;cmpa #3 ; BREAK
+	;lbeq reset
+	;lbsr PutChar
 	bra loop@
 
 stest0
@@ -430,75 +408,67 @@ IRQ
  ;lda #100
  ;sta $ff9a
 
- ldu currw
- pshs u
  inc irqcnt
 
-* Update window 0
- ldu #window0
- stu currw
- lbsr GetChar
+* begin poll keyboard
+ lbsr romson
+ jsr [$a000]
+ lbsr romsoff
  tsta
- beq no@
+ beq nokey@
+ clr ctrl
+ cmpa #3 ; BREAK
+ lbeq reset
+ cmpa #8 ; BACKSPACE
+ bne nobksp@
+ tst ncmd
+ beq nokey@
+ dec ncmd
+ lda #' '
+ inc ctrl
+nobksp@
+* Store character in command buffer
+ ldu #cmd
+ ldb ncmd
+ sta b,u
+ clr 1,u
+* Display character
+ ldx #11
+ ldb ncmd
+ leax b,x
+ ldy #20
  tfr a,b
- lbsr DrawChar
-no@
+ lbsr GfxChar
+ leax 1,x
+ ldb #' '
+ lbsr GfxChar
+ tst ctrl
+ bne nokey@
+ inc ncmd
+nokey@
+* end poll keyboard
 
-* Update window 1
- ldu #window1
- stu currw
- lbsr GetChar
- tsta
- beq no@
- tfr a,b
- lbsr DrawChar
-no@
-
-* Update window 2
- ldu #window2
- stu currw
- lbsr GetChar
- tsta
- beq no@
- tfr a,b
- lbsr DrawChar
-no@
-
-* Update window 3
- ldu #window3
- stu currw
- lbsr GetChar
- tsta
- beq no@
- tfr a,b
- lbsr DrawChar
-no@
-
-* Update window 4
- ldu #window4
- stu currw
- lbsr GetChar
- tsta
- beq no@
- tfr a,b
- lbsr DrawChar
-no@
-
-* Every half second, blink cursor in window 4
+* Every half second, blink cursor
  lda irqcnt
- anda #%00001111
+ anda #%00001111 ; half second
  bne no@
  lda irqcnt
- anda #%00011111
+ anda #%00011111 ; quarter second
  bne curoff@
  ldb #'_'
  bra drawcur@
 curoff@
  ldb #' '
 drawcur@
- lbsr DrawChar
- dec XCURSOR,u
+ ldy #20
+ ldx #11
+ lda ncmd
+ leax a,x
+ lbsr GfxChar
 no@
+
+* Update all windows
+ lbsr UpdateWindows
 
 * Once a second, random chance of lines in window 0
  lda irqcnt
@@ -509,8 +479,12 @@ no@
  bne no@
  ldu #window0
  stu currw
- leau stest0,pcr
- lbsr DrawString
+ lbsr rand
+ lbsr DrawHex
+ lda #13
+ lbsr PutChar
+ ;leau stest0,pcr
+ ;lbsr DrawString
 no@
 
 * Once a second, random chance of lines in window 1
@@ -522,8 +496,12 @@ no@
  bne no@
  ldu #window1
  stu currw
- leau stest1,pcr
- lbsr DrawString
+ lbsr rand
+ lbsr DrawHex
+ lda #13
+ lbsr PutChar
+ ;leau stest1,pcr
+ ;lbsr DrawString
 no@
 
 * Once a second, random chance of lines in window 2
@@ -535,8 +513,12 @@ no@
  bne no@
  ldu #window2
  stu currw
- leau stest2,pcr
- lbsr DrawString
+ lbsr rand
+ lbsr DrawHex
+ lda #13
+ lbsr PutChar
+ ;leau stest2,pcr
+ ;lbsr DrawString
 no@
 
 * Once a second, random chance of lines in window 3
@@ -548,13 +530,19 @@ no@
  bne no@
  ldu #window3
  stu currw
- leau stest3,pcr
- lbsr DrawString
+ lbsr rand
+ lbsr DrawHex
+ lda #13
+ lbsr PutChar
+ ;leau stest3,pcr
+ ;lbsr DrawString
 no@
 
- tst $ff02 ; dismiss interrupt
- puls u
- stu currw
+* Dismiss interrupt
+ tst $ff02
+
+ ;puls u
+ ;stu currw
 
 * Turn off border (DEBUG)
  ;lda #0
@@ -592,17 +580,43 @@ no@
  puls b,x,u,pc
 
 wtitle0
- fcc "WINDOW 0:"
- fcb 0
+ fcn "WINDOW 0:"
 wtitle1
- fcc "WINDOW 1:"
- fcb 0
+ fcn "WINDOW 1:"
 wtitle2
- fcc "WINDOW 2:"
- fcb 0
+ fcn "WINDOW 2:"
 wtitle3
- fcc "WINDOW 3:"
- fcb 0
+ fcn "WINDOW 3:"
+wtitle4
+ fcn "COMMAND:"
+
+wndlst
+ fdb window0
+ fdb window1
+ fdb window2
+ fdb window3
+ fdb 0
+
+UpdateWindows
+ ldu #wndlst
+loop@
+ ldd ,u
+ beq exit@
+ std currw
+ lbsr UpdateWindow
+ leau 2,u
+ bra loop@
+exit@
+ rts
+
+UpdateWindow
+ lbsr GetChar
+ tsta
+ beq no@
+ tfr a,b
+ lbsr DrawChar
+no@
+ rts
 
 * Screen $7000
 

@@ -2,7 +2,6 @@
 * Vertically scroll current window
 VScroll
  pshs d,x,y,u
- lbsr romsoff
  ldu currw
 
  * Point X to start of row
@@ -87,7 +86,6 @@ VScont
  bne VS0
  leas 1,s
 
- lbsr romson
  puls d,x,y,u,pc
 
 ; currw current window
@@ -225,11 +223,9 @@ DrawRow
 * odd
  ldd #%1111000000000000
 even@
- lbsr romsoff
  anda ,u
  andb 1,u
  std ,u
- lbsr romson
 
  ldb ,x+
  lsrb
@@ -252,11 +248,9 @@ even@
  ldu currw
  anda COLOR,u
  andb COLOR,u
- lbsr romsoff
  ora ,y
  orb 1,y
  std ,y
- lbsr romson
 
 * next row
  ldd ptr
@@ -275,8 +269,7 @@ xDrawChar
  puls d,x,y,u,pc
 
 charset
- fcc " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:,.!#_"
- fcb 0
+ fcn " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:,.!#_"
 
 font
  fcb 0x00,0x00,0x00,0x00,0x00 ;  (space)
@@ -296,7 +289,8 @@ font
  fcb 0x44,0x64,0x54,0x4c,0x44 ;  N
  fcb 0x38,0x44,0x44,0x44,0x38 ;  O
  fcb 0x78,0x44,0x78,0x40,0x40 ;  P
- fcb 0x7c,0x44,0x44,0x7c,0x10 ;  Q
+ ;fcb 0x7c,0x44,0x44,0x7c,0x10 ;  Q
+ fcb 0x38,0x44,0x44,0x24,0x58 ;  Q
  fcb 0x78,0x44,0x78,0x44,0x44 ;  R
  fcb 0x3c,0x40,0x38,0x04,0x78 ;  S
  fcb 0x7c,0x10,0x10,0x10,0x10 ;  T
@@ -378,11 +372,9 @@ GfxRow
 * odd
  ldd #%1111000000000000
 even@
- lbsr romsoff
  anda ,u
  andb 1,u
  std ,u
- lbsr romson
 
  ldb ,x+
  lsrb
@@ -402,11 +394,9 @@ even@
  rorb
 even@
 * even
- lbsr romsoff
  ora ,u
  orb 1,u
  std ,u
- lbsr romson
 
 * next row
  ldd ptr
