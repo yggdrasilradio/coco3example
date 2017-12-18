@@ -50,7 +50,7 @@ odd	rmb 1
 	org $1000
 
 STACK	rmb 1
-cmd	rmb 100
+cmd	rmb 21
 ncmd	rmb 1
 
 XSTART equ 0
@@ -223,6 +223,8 @@ no@
 	clrb	; YCURSOR
 	std 4,u
 	std 6,u ; FILLPTR / EMPTPTR
+	lda #GREEN
+	sta 8,u ; COLOR
 
 	* Window 1
 	ldu #window1
@@ -236,6 +238,8 @@ no@
 	clrb	; YCURSOR
 	std 4,u
 	std 6,u ; FILLPTR / EMPTPTR
+	lda #GREEN
+	sta 8,u ; COLOR
 
 	* Window 2
 	ldu #window2
@@ -249,6 +253,8 @@ no@
 	clrb	; YCURSOR
 	std 4,u
 	std 6,u ; FILLPTR / EMPTPTR
+	lda #GREEN
+	sta 8,u ; COLOR
 
 	* Window 3
 	ldu #window3
@@ -262,6 +268,8 @@ no@
 	clrb	; YCURSOR
 	std 4,u
 	std 6,u ; FILLPTR / EMPTPTR
+	lda #GREEN
+	sta 8,u ; COLOR
 
 	* Set IRQ interrupt vector
 	lda #$7e
@@ -406,13 +414,24 @@ IRQ
 
  inc irqcnt
 
-* begin poll keyboard
+* Begin poll keyboard
  lbsr romson
  jsr [$a000]
  lbsr romsoff
  tsta
  beq nokey@
  clr bksp
+ cmpa #13
+ bne nocr@
+ ldx #11
+ ldy #20
+ leau wtitle5,pcr
+ lbsr GfxString
+ lbsr DoCommand
+ clr cmd
+ clr ncmd
+ lbra nokey@
+nocr@
  cmpa #3 ; BREAK
  lbeq reset
  cmpa #8 ; BACKSPACE
@@ -424,8 +443,10 @@ IRQ
  inc bksp
 nobksp@
 * Store character in command buffer
- ldu #cmd
  ldb ncmd
+ cmpb #20
+ lbge nokey@
+ ldu #cmd
  leau b,u
  sta ,u
  clr 1,u
@@ -434,10 +455,10 @@ nobksp@
  clr ,u
 no@
 * Display character
- ldx #11
+ ldx #11 ; row
  ldb ncmd
  leax b,x
- ldy #20
+ ldy #20 ; column
  tfr a,b
  lbsr GfxChar
  leax 1,x
@@ -447,7 +468,7 @@ no@
  bne nokey@
  inc ncmd
 nokey@
-* end poll keyboard
+* End poll keyboard
 
 * Every half second, blink cursor
  lda irqcnt
@@ -480,24 +501,8 @@ no@
  bne no@
  ldu #window0
  stu currw
- ;lbsr rand ; random hex number
- ;lbsr DrawHex
- ;lda #' ' ; space
- ;lbsr PutChar
- ldb ncmd ; number of characters in command buffer
- lbsr DrawByte
- lda #' ' ; space
- lbsr PutChar
- ldb cmd ; 1st char of command
- lbsr DrawByte
- lda #' ' ; space
- lbsr PutChar
- ldb cmd+1 ; 2nd char of command
- lbsr DrawByte
- lda #' ' ; space
- lbsr PutChar
- ldb cmd+2 ; 3rd char of command
- lbsr DrawByte
+ lbsr rand ; random hex number
+ lbsr DrawHex
  lda #13 ; CRLF
  lbsr PutChar
  ;leau stest0,pcr
@@ -606,6 +611,8 @@ wtitle3
  fcn "WINDOW 3:"
 wtitle4
  fcn "COMMAND:"
+wtitle5
+ fcn "                     "
 
 wndlst
  fdb window0
@@ -633,6 +640,19 @@ UpdateWindow
  tfr a,b
  lbsr DrawChar
 no@
+ rts
+
+DoCommand
+ ldu #window0
+ stu currw
+ lda #FONTAMBER
+ lbsr PutChar
+ ldu #cmd
+ lbsr DrawString
+ lda #FONTGREEN
+ lbsr PutChar
+ lda #13 ; CRLF
+ lbsr PutChar
  rts
 
 * Screen $7000
