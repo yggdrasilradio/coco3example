@@ -35,7 +35,6 @@ ystring rmb 1
 xpos	rmb 2
 ypos	rmb 2
 rowdata	rmb 1
-string	rmb 10
 currw	rmb 2
 irqcnt	rmb 1
 ptr	rmb 2
@@ -44,14 +43,17 @@ ctrl	rmb 1
 bksp	rmb 1
 seed	rmb 2
 odd	rmb 1
+ncmd	rmb 1
+verb	rmb 2
+obj	rmb 2
 
 * RAM storage
 
 	org $1000
 
 STACK	rmb 1
+string	rmb 10
 cmd	rmb 21
-ncmd	rmb 1
 
 XSTART equ 0
 YSTART equ 1
@@ -65,49 +67,13 @@ COLOR equ 8
 BUFFER equ 9
 
 window0
-	rmb 1 ;  ,u XSTART
-	rmb 1 ; 1,u YSTART
-	rmb 1 ; 2,u XWIDTH
-	rmb 1 ; 3,u YHEIGHT
-	rmb 1 ; 4,u XCURSOR
-	rmb 1 ; 5,u YCURSOR
-	rmb 1 ; 6,u FILLPTR
-	rmb 1 ; 7,u EMPTPTR
-	rmb 1 ; 8,u COLOR
-	rmb 256 ; 9,u BUFFER
+	rmb 265
 window1
-	rmb 1 ;  ,u XSTART
-	rmb 1 ; 1,u YSTART
-	rmb 1 ; 2,u XWIDTH
-	rmb 1 ; 3,u YHEIGHT
-	rmb 1 ; 4,u XCURSOR
-	rmb 1 ; 5,u YCURSOR
-	rmb 1 ; 6,u FILLPTR
-	rmb 1 ; 7,u EMPTPTR
-	rmb 1 ; 8,u COLOR
-	rmb 256 ; 9,u BUFFER
+	rmb 265
 window2
-	rmb 1 ;  ,u XSTART
-	rmb 1 ; 1,u YSTART
-	rmb 1 ; 2,u XWIDTH
-	rmb 1 ; 3,u YHEIGHT
-	rmb 1 ; 4,u XCURSOR
-	rmb 1 ; 5,u YCURSOR
-	rmb 1 ; 6,u FILLPTR
-	rmb 1 ; 7,u EMPTPTR
-	rmb 1 ; 8,u COLOR
-	rmb 256 ; 9,u BUFFER
+	rmb 265
 window3
-	rmb 1 ;  ,u XSTART
-	rmb 1 ; 1,u YSTART
-	rmb 1 ; 2,u XWIDTH
-	rmb 1 ; 3,u YHEIGHT
-	rmb 1 ; 4,u XCURSOR
-	rmb 1 ; 5,u YCURSOR
-	rmb 1 ; 6,u FILLPTR
-	rmb 1 ; 7,u EMPTPTR
-	rmb 1 ; 8,u COLOR
-	rmb 256 ; 9,u BUFFER
+	rmb 265
 
 * Program
 
@@ -143,7 +109,6 @@ start
 	clr cmd
 
 	* Draw borders
-; lbra no@
 	lda #WHITE
 	sta color
 	ldd #0
@@ -208,68 +173,9 @@ start
 	ldd #224
 	std y2
 	lbsr line
-no@
-	* Create windows
 
-	* Window 0
-	ldu #window0
-	lda #2	; XSTART
-	ldb #2	; YSTART
-	std ,u
-	lda #50	; XWIDTH
-	ldb #8	; YHEIGHT
-	std 2,u
-	clra	; XCURSOR
-	clrb	; YCURSOR
-	std 4,u
-	std 6,u ; FILLPTR / EMPTPTR
-	lda #GREEN
-	sta 8,u ; COLOR
-
-	* Window 1
-	ldu #window1
-	lda #55	; XSTART
-	ldb #2	; YSTART
-	std ,u
-	lda #51	; XWIDTH
-	ldb #8	; YHEIGHT
-	std 2,u
-	clra	; XCURSOR
-	clrb	; YCURSOR
-	std 4,u
-	std 6,u ; FILLPTR / EMPTPTR
-	lda #GREEN
-	sta 8,u ; COLOR
-
-	* Window 2
-	ldu #window2
-	lda #2	; XSTART
-	ldb #24	; YSTART
-	std ,u
-	lda #51	; XWIDTH
-	ldb #8	; YHEIGHT
-	std 2,u
-	clra	; XCURSOR
-	clrb	; YCURSOR
-	std 4,u
-	std 6,u ; FILLPTR / EMPTPTR
-	lda #GREEN
-	sta 8,u ; COLOR
-
-	* Window 3
-	ldu #window3
-	lda #55 ; XSTART
-	ldb #24	; YSTART
-	std ,u
-	lda #51	; XWIDTH
-	ldb #8	; YHEIGHT
-	std 2,u
-	clra	; XCURSOR
-	clrb	; YCURSOR
-	std 4,u
-	std 6,u ; FILLPTR / EMPTPTR
-	lda #GREEN
-	sta 8,u ; COLOR
+	* Init windows
+	lbsr InitWindows
 
 	* Set IRQ interrupt vector
 	lda #$7e
@@ -312,98 +218,12 @@ no@
 	* Enable IRQ
 	andcc #%10101111
 
-	* Window 0
-	;ldu #window0
-	;stu currw
-	;leau stest0,pcr
-	;lbsr DrawString
-
-	* Window 1
-	;ldu #window1
-	;stu currw
-	;leau stest1,pcr
-	;lbsr DrawString
-
-	* Window 2
-	;ldu #window2
-	;stu currw
-	;leau stest2,pcr
-	;lbsr DrawString
-
-	* Window 3
-	;ldu #window3
-	;stu currw
-	;leau stest3,pcr
-	;lbsr DrawString
-
+* Idle loop
 loop@
 	ldd seed
 	addd #1
 	std seed
 	bra loop@
-
-stest0
- fcb FONTGREEN
- fcb 13
- fcc "THIS IS A "
- fcb FONTAMBER
- fcc "LONG LINE"
- fcb FONTGREEN
- fcc " FOR US, HERE"
- fcb 13
- fcc "LINE 2"
- fcb 13
- fcc "LINE 3"
- fcb 13
- fcc "LINE 4"
- fcb 13
- fcc "LINE 5"
- fcb 0
-stest1
- fcb FONTGREEN
- fcb 13
- fcc "LINE 1"
- fcb 13
- fcc "LINE 2"
- fcb 13
- fcc "LINE 3"
- fcb 13
- fcc "LINE 4"
- fcb 13
- fcc "LINE 5"
- fcb 0
-stest2
- fcb FONTGREEN
- fcb 13
- fcc "LINE 1"
- fcb 13
- fcc "LINE 2"
- fcb 13
- fcc "LINE 3"
- fcb 13
- fcc "LINE 4"
- fcb 13
- fcc "LINE 5"
- fcb 0
-stest3
- fcb FONTGREEN
- fcb 13
- fcc "LINE 1"
- fcb 13
- fcc "LINE 2"
- fcb 13
- fcc "LINE 3"
- fcb 13
- fcc "LINE 4"
- fcb 13
- fcc "LINE 5"
- fcb 0
-
- include utils.asm
- include graphics.asm
- include line.asm
- include font.asm
- include strings.asm
 
 IRQ
  orcc #%01010000 ; disable IRQ
@@ -492,7 +312,7 @@ no@
 * Update all windows
  lbsr UpdateWindows
 
-* Once a second, random chance of lines in window 0
+* Once a second, random chance of line in window 0
  lda irqcnt
  anda #%00011111
  bne no@
@@ -505,11 +325,9 @@ no@
  lbsr DrawHex
  lda #13 ; CRLF
  lbsr PutChar
- ;leau stest0,pcr
- ;lbsr DrawString
 no@
 
-* Once a second, random chance of lines in window 1
+* Once a second, random chance of line in window 1
  lda irqcnt
  anda #%00011111
  bne no@
@@ -522,11 +340,9 @@ no@
  lbsr DrawHex
  lda #13
  lbsr PutChar
- ;leau stest1,pcr
- ;lbsr DrawString
 no@
 
-* Once a second, random chance of lines in window 2
+* Once a second, random chance of line in window 2
  lda irqcnt
  anda #%00011111
  bne no@
@@ -539,11 +355,9 @@ no@
  lbsr DrawHex
  lda #13
  lbsr PutChar
- ;leau stest2,pcr
- ;lbsr DrawString
 no@
 
-* Once a second, random chance of lines in window 3
+* Once a second, random chance of line in window 3
  lda irqcnt
  anda #%00011111
  bne no@
@@ -556,15 +370,10 @@ no@
  lbsr DrawHex
  lda #13
  lbsr PutChar
- ;leau stest3,pcr
- ;lbsr DrawString
 no@
 
 * Dismiss interrupt
  tst $ff02
-
- ;puls u
- ;stu currw
 
 * Turn off border (DEBUG)
  ;lda #0
@@ -572,34 +381,6 @@ no@
 
  andcc #%10101111 ; enable IRQ
  rti
-
-; currw current window
-; A character
-PutChar
- pshs b,x,u
- ldu currw
- ldb FILLPTR,u
- leax BUFFER,u
- abx
- sta ,x
- inc FILLPTR,u
- puls b,x,u,pc
-
-; currw current window
-; A character
-GetChar
- pshs b,x,u
- clra
- ldu currw
- ldb EMPTPTR,u
- cmpb FILLPTR,u
- beq no@
- leax BUFFER,u
- abx
- lda ,x
- inc EMPTPTR,u
-no@
- puls b,x,u,pc
 
 wtitle0
  fcn "WINDOW 0:"
@@ -614,46 +395,15 @@ wtitle4
 wtitle5
  fcn "                     "
 
-wndlst
- fdb window0
- fdb window1
- fdb window2
- fdb window3
- fdb 0
+ include utils.asm
+ include graphics.asm
+ include line.asm
+ include font.asm
+ include strings.asm
+ include parser.asm
+ include windows.asm
 
-UpdateWindows
- ldu #wndlst
-loop@
- ldd ,u
- beq exit@
- std currw
- lbsr UpdateWindow
- leau 2,u
- bra loop@
-exit@
- rts
-
-UpdateWindow
- lbsr GetChar
- tsta
- beq no@
- tfr a,b
- lbsr DrawChar
-no@
- rts
-
-DoCommand
- ldu #window0
- stu currw
- lda #FONTAMBER
- lbsr PutChar
- ldu #cmd
- lbsr DrawString
- lda #FONTGREEN
- lbsr PutChar
- lda #13 ; CRLF
- lbsr PutChar
- rts
+zprog
 
 * Screen $7000
 

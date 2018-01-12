@@ -51,10 +51,7 @@ xloop@
 * currw current window
 DrawHex
  pshs d,x
-
  ldu currw
- ldb #GREEN
- stb COLOR,u
  ldb ,s
  lsrb
  lsrb
@@ -69,7 +66,6 @@ DrawHex
  leax hextbl,pcr
  lda b,x
  lbsr PutChar
-
  ldb 1,s
  lsrb
  lsrb

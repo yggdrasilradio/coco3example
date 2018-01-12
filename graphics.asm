@@ -46,7 +46,7 @@ gfxinit
  sta $ffb0
  lda #48 	; YELLOW
  sta $ffb1
- lda #$12 	; GREEN $02 $10 $12
+ lda #$12 	; GREEN
  sta $ffb2
  lda #$3f 	; WHITE
  sta $ffb3
